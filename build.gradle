@@ -1,0 +1,105 @@
+buildscript {
+    repositories {
+        maven {
+            url = 'https://maven.minecraftforge.net'
+        }
+        maven {
+            url = 'https://repo.spongepowered.org/maven'
+        }
+        mavenCentral()
+    }
+    dependencies {
+        classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '5.1.+', changing: true
+        classpath 'org.spongepowered:mixingradle:0.7-SNAPSHOT'
+    }
+}
+
+
+apply plugin: 'eclipse'
+apply plugin: 'maven-publish'
+apply plugin: 'net.minecraftforge.gradle'
+apply plugin: 'org.spongepowered.mixin'
+// Only edit below this line, the above code adds and enables the necessary things for Forge to be setup.
+
+
+version = "${mod_version}"
+group = 'com.telepathicgrunt.structuretutorial' // https://maven.apache.org/guides/mini/guide-naming-conventions.html
+archivesBaseName = 'structure_tutorial'
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(17)
+
+minecraft {
+    mappings channel: "official", version: "${mc_version}"
+    //accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
+
+    runs {
+        client {
+            workingDirectory project.file('run')
+            // Recommended logging data for a userdev environment
+            property 'forge.logging.markers', 'SCAN,REGISTRIES,REGISTRYDUMP'
+
+            // Needed to make other mods with mixins be able to run in you development environment
+            property 'mixin.env.remapRefMap', 'true'
+            property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
+            arg "-mixin.config=villagers.general.mixin.json"
+
+            mods { examplemod { source sourceSets.main } }
+        }
+
+        server {
+            workingDirectory project.file('run')
+            // Recommended logging data for a userdev environment
+            property 'forge.logging.markers', 'SCAN,REGISTRIES,REGISTRYDUMP'
+
+            // Needed to make other mods with mixins be able to run in you development environment
+            property 'mixin.env.remapRefMap', 'true'
+            property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
+            arg "-mixin.config=villagers.general.mixin.json"
+
+            mods { examplemod {  source sourceSets.main } }
+        }
+    }
+}
+
+repositories {
+    // Repo for getting Blame from
+    maven { url "https://nexus.resourcefulbees.com/repository/telepathicgrunt/" }
+}
+
+dependencies {
+    // Specify the version of Minecraft to use, If this is any group other then 'net.minecraft' it is assumed
+    // that the dep is a ForgeGradle 'patcher' dependency. And it's patches will be applied.
+    // The userdev artifact is a special name and will get all sorts of transformations applied to it.
+    minecraft 'net.minecraftforge:forge:1.18.2-40.2.4'
+    annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
+    testAnnotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
+
+    // I recommend having CommandStructures on in your development environment as it gives
+    // commands for making debugging structures easier. It is super useful!
+    runtimeOnly fg.deobf("com.telepathicgrunt:CommandStructures:2.0.0+1.18.2")
+}
+
+mixin {
+    add sourceSets.main, "villagers.general.mixin-refmap.json"
+}
+
+// Example for how to get properties into the manifest for reading by the runtime..
+jar {
+    from('/') {
+        include 'LICENSE.txt'
+    }
+
+    manifest {
+        attributes([
+            "Specification-Title": "structure_tutorial",
+            "Specification-Vendor": "telepathicgrunt",
+            "Specification-Version": "1",
+            "Implementation-Title": project.name,
+            "Implementation-Version": project.version,
+            "Implementation-Vendor" :"telepathicgrunt",
+            "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
+            "TweakOrder": 0,
+            "MixinConfigs" : "villagers.general.mixin.json"
+        ])
+    }
+}
