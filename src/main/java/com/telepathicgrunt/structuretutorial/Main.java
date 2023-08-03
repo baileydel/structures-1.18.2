@@ -31,8 +31,9 @@ import java.util.*;
 
 @Mod(Main.MODID)
 public class Main {
-    public static final Logger LOGGER = LogManager.getLogger();
     public static final String MODID = "structure_tutorial";
+    public static final Logger LOGGER = LogManager.getLogger();
+    List<BoundingBox> boxes = new ArrayList<>();
 
     public Main() {
         IEventBus bus = FMLJavaModLoadingContext.get().getModEventBus();
@@ -49,12 +50,11 @@ public class Main {
         MinecraftForge.EVENT_BUS.register(new ClientEvents());
     }
 
-
     private void CommonSetup(final FMLCommonSetupEvent event) {
         Network.init();
     }
 
-    List<BoundingBox> boxes = new ArrayList<>();
+
 
     @SubscribeEvent
     public void WorldTick(TickEvent.WorldTickEvent event) {

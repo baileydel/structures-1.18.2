@@ -94,9 +94,9 @@ public class SkyStructures extends StructureFeature<JigsawConfiguration> {
         blockpos = blockpos.above(60);
 
         Optional<PieceGenerator<JigsawConfiguration>> structurePiecesGenerator =
-                JigsawPlacement.addPieces(
+                NewJigsawPlacement.addPieces(
                         context, // Used for JigsawPlacement to get all the proper behaviors done.
-                        PoolElementStructurePiece::new, // Needed in order to create a list of jigsaw pieces when making the structure's layout.
+                        BuildPoolElementStructurePiece::new, // Needed in order to create a list of jigsaw pieces when making the structure's layout.
                         blockpos, // Position of the structure. Y value is ignored if last parameter is set to true.
                         false,  // Special boundary adjustments for villages. It's... hard to explain. Keep this false and make your pieces not be partially intersecting.
                         // Either not intersecting or fully contained will make children pieces spawn just fine. It's easier that way.
