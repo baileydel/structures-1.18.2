@@ -9,11 +9,9 @@ import net.minecraft.world.level.levelgen.GenerationStep;
 import net.minecraft.world.level.levelgen.feature.StructureFeature;
 import net.minecraft.world.level.levelgen.feature.configurations.JigsawConfiguration;
 import net.minecraft.world.level.levelgen.structure.BuiltinStructureSets;
-import net.minecraft.world.level.levelgen.structure.PoolElementStructurePiece;
 import net.minecraft.world.level.levelgen.structure.PostPlacementProcessor;
 import net.minecraft.world.level.levelgen.structure.pieces.PieceGenerator;
 import net.minecraft.world.level.levelgen.structure.pieces.PieceGeneratorSupplier;
-import net.minecraft.world.level.levelgen.structure.pools.JigsawPlacement;
 import net.minecraft.world.level.levelgen.structure.pools.StructureTemplatePool;
 import org.apache.logging.log4j.Level;
 import org.jetbrains.annotations.NotNull;
@@ -35,7 +33,6 @@ public class SkyStructures extends StructureFeature<JigsawConfiguration> {
         // Create the pieces layout of the structure and give it to the game
         super(CODEC, SkyStructures::createPiecesGenerator, PostPlacementProcessor.NONE);
     }
-
 
     @Override
     @NotNull
@@ -96,7 +93,7 @@ public class SkyStructures extends StructureFeature<JigsawConfiguration> {
         Optional<PieceGenerator<JigsawConfiguration>> structurePiecesGenerator =
                 NewJigsawPlacement.addPieces(
                         context, // Used for JigsawPlacement to get all the proper behaviors done.
-                        BuildPoolElementStructurePiece::new, // Needed in order to create a list of jigsaw pieces when making the structure's layout.
+                        VillageBuildablePiece::new, // Needed in order to create a list of jigsaw pieces when making the structure's layout.
                         blockpos, // Position of the structure. Y value is ignored if last parameter is set to true.
                         false,  // Special boundary adjustments for villages. It's... hard to explain. Keep this false and make your pieces not be partially intersecting.
                         // Either not intersecting or fully contained will make children pieces spawn just fine. It's easier that way.
@@ -118,7 +115,7 @@ public class SkyStructures extends StructureFeature<JigsawConfiguration> {
             // I use to debug and quickly find out if the structure is spawning or not and where it is.
             // This is returning the coordinates of the center starting piece.
             Main.LOGGER.log(Level.DEBUG, "Rundown House at {}", blockpos);
-            System.out.println(blockpos.getX() + " " + blockpos.getY() + " " + blockpos.getZ());
+            System.out.println(blockpos.getX() + " " + (blockpos.getY() + 60) + " " + blockpos.getZ());
         }
 
         // Return the pieces generator that is now set up so that the game runs it when it needs to create the layout of structure pieces.
