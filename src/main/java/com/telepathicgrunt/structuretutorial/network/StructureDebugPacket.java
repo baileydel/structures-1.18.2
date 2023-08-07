@@ -1,47 +1,62 @@
 package com.telepathicgrunt.structuretutorial.network;
 
+import com.mojang.datafixers.util.Pair;
 import com.telepathicgrunt.structuretutorial.client.ClientEvents;
 import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.network.NetworkEvent;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Supplier;
 
 public class StructureDebugPacket {
-   private BlockPos one;
-   private BlockPos two;
+    // List of all data for client
+    public static final List<Pair<CompoundTag, BoundingBox>> data = new ArrayList<>();
 
-   public StructureDebugPacket(BlockPos one, BlockPos two) {
-      this.one = one;
-      this.two = two;
-   }
+    @Nullable
+    private final CompoundTag tag;
+    private final BlockPos one;
+    private final BlockPos two;
 
-   public StructureDebugPacket(FriendlyByteBuf buf) {
-      one = buf.readBlockPos();
-      two = buf.readBlockPos();
-   }
+    public StructureDebugPacket(@Nullable CompoundTag tag, BlockPos one, BlockPos two) {
+        this.tag = tag;
+        this.one = one;
+        this.two = two;
+    }
 
-   public void write(FriendlyByteBuf buf) {
-      buf.writeBlockPos(one);
-      buf.writeBlockPos(two);
-   }
+    public StructureDebugPacket(FriendlyByteBuf buf) {
+        tag = buf.readAnySizeNbt();
+        one = buf.readBlockPos();
+        two = buf.readBlockPos();
+    }
 
-   public static void handle(StructureDebugPacket msg, Supplier<NetworkEvent.Context> ctx) {
-      ctx.get().enqueueWork(() ->
-              DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
-                 BlockPos o = msg.one;
-                 BlockPos t = msg.two;
-                 BoundingBox box = new BoundingBox(o.getX(), o.getY(), o.getZ(), t.getX(), t.getY(), t.getZ());
+    public void write(FriendlyByteBuf buf) {
+        buf.writeNbt(tag);
+        buf.writeBlockPos(one);
+        buf.writeBlockPos(two);
+    }
 
-                 if (!ClientEvents.boxes.contains(box)) {
-                    System.out.println("Client - Adding new Box " + box);
-                    ClientEvents.boxes.add(box);
-                 }
-              })
-      );
-      ctx.get().setPacketHandled(true);
-   }
+    /*
+        Only ever handle data on client (one way packet)
+     */
+    public static void handle(StructureDebugPacket msg, Supplier<NetworkEvent.Context> ctx) {
+        ctx.get().enqueueWork(() ->
+                DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
+                    Pair<CompoundTag, BoundingBox> pair = Pair.of(msg.tag, BoundingBox.fromCorners(msg.one, msg.two));
+
+                    if (!data.contains(pair)) {
+                        data.add(pair);
+
+                        System.out.println("Client - Adding new Box " + pair);
+                    }
+                })
+        );
+        ctx.get().setPacketHandled(true);
+    }
 }
