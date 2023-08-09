@@ -1,4 +1,4 @@
-package com.telepathicgrunt.structuretutorial.structures;
+package com.delke.custom_villages.structures;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Queues;

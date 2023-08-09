@@ -1,4 +1,4 @@
-package com.telepathicgrunt.structuretutorial.structures;
+package com.delke.custom_villages.structures;
 
 import com.google.common.collect.Lists;
 import com.mojang.logging.LogUtils;
@@ -31,7 +31,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 
-import static com.telepathicgrunt.structuretutorial.STStructures.VILLAGE_BUILDABLE_PIECE;
+import static com.delke.custom_villages.STStructures.VILLAGE_BUILDABLE_PIECE;
 
 /*
    This is only used for village structures,
@@ -69,24 +69,24 @@ public class VillageBuildablePiece extends StructurePiece {
         listtag.forEach((p_204943_) -> this.junctions.add(JigsawJunction.deserialize(new Dynamic<>(dynamicops, p_204943_))));
     }
 
-    protected void addAdditionalSaveData(StructurePieceSerializationContext p_192425_, CompoundTag p_192426_) {
-        p_192426_.putInt("PosX", this.position.getX());
-        p_192426_.putInt("PosY", this.position.getY());
-        p_192426_.putInt("PosZ", this.position.getZ());
-        p_192426_.putInt("ground_level_delta", this.groundLevelDelta);
+    protected void addAdditionalSaveData(StructurePieceSerializationContext p_192425_, CompoundTag nbt) {
+        nbt.putInt("PosX", this.position.getX());
+        nbt.putInt("PosY", this.position.getY());
+        nbt.putInt("PosZ", this.position.getZ());
+        nbt.putInt("ground_level_delta", this.groundLevelDelta);
         DynamicOps<Tag> dynamicops = RegistryOps.create(NbtOps.INSTANCE, p_192425_.registryAccess());
-        StructurePoolElement.CODEC.encodeStart(dynamicops, this.element).resultOrPartial(LOGGER::error).ifPresent((p_163125_) -> p_192426_.put("pool_element", p_163125_));
-        p_192426_.putString("rotation", this.rotation.name());
+        StructurePoolElement.CODEC.encodeStart(dynamicops, this.element).resultOrPartial(LOGGER::error).ifPresent((p_163125_) -> nbt.put("pool_element", p_163125_));
+        nbt.putString("rotation", this.rotation.name());
         ListTag listtag = new ListTag();
 
         for (JigsawJunction jigsawjunction : this.junctions) {
             listtag.add(jigsawjunction.serialize(dynamicops).getValue());
         }
 
-        p_192426_.put("junctions", listtag);
+        nbt.put("junctions", listtag);
 
-        if (!p_192426_.contains("custom") && getStructureData() != null) {
-            p_192426_.put("custom", getStructureData());
+        if (!nbt.contains("custom") && getStructureData() != null) {
+            nbt.put("custom", getStructureData());
         }
     }
 
@@ -154,9 +154,4 @@ public class VillageBuildablePiece extends StructurePiece {
         }
         return null;
     }
-
-    //TODO Depending on the villages initial wealth, it will determine if this is generated.
-    /*
-
-     */
 }

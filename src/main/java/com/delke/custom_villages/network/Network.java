@@ -1,6 +1,6 @@
-package com.telepathicgrunt.structuretutorial.network;
+package com.delke.custom_villages.network;
 
-import com.telepathicgrunt.structuretutorial.Main;
+import com.delke.custom_villages.Main;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.network.NetworkDirection;
 import net.minecraftforge.network.NetworkRegistry;

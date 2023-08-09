@@ -23,7 +23,7 @@ apply plugin: 'org.spongepowered.mixin'
 
 
 version = "${mod_version}"
-group = 'com.telepathicgrunt.structuretutorial' // https://maven.apache.org/guides/mini/guide-naming-conventions.html
+group = 'com.delke.custom_villages' // https://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = 'structure_tutorial'
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(17)

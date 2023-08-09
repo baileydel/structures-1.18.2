@@ -1,19 +1,13 @@
-package com.telepathicgrunt.structuretutorial;
+package com.delke.custom_villages;
 
-import com.telepathicgrunt.structuretutorial.structures.SkyStructures;
-import com.telepathicgrunt.structuretutorial.structures.VillageBuildablePiece;
+import com.delke.custom_villages.structures.VillageBuildablePiece;
+import com.delke.custom_villages.structures.SkyStructures;
 import net.minecraft.core.Registry;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.levelgen.feature.StructureFeature;
-import net.minecraft.world.level.levelgen.structure.StructurePiece;
-import net.minecraft.world.level.levelgen.structure.pieces.StructurePieceSerializationContext;
 import net.minecraft.world.level.levelgen.structure.pieces.StructurePieceType;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
-
-import static com.telepathicgrunt.structuretutorial.Main.MODID;
 
 public class STStructures {
 
@@ -25,7 +19,7 @@ public class STStructures {
      * configured structures and configured features need to be registered directly to BuiltinRegistries as there
      * is no Deferred Registry system for them.
      */
-    public static final DeferredRegister<StructureFeature<?>> DEFERRED_REGISTRY_STRUCTURE = DeferredRegister.create(ForgeRegistries.STRUCTURE_FEATURES, MODID);
+    public static final DeferredRegister<StructureFeature<?>> DEFERRED_REGISTRY_STRUCTURE = DeferredRegister.create(ForgeRegistries.STRUCTURE_FEATURES, Main.MODID);
 
     /**
      * Registers the base structure itself and sets what its path is. In this case,
@@ -33,7 +27,7 @@ public class STStructures {
      */
     public static final RegistryObject<StructureFeature<?>> SKY_STRUCTURES = DEFERRED_REGISTRY_STRUCTURE.register("sky_structures", SkyStructures::new);
 
-    public static final DeferredRegister<StructurePieceType> REGISTER = DeferredRegister.create(Registry.STRUCTURE_PIECE_REGISTRY, MODID);
+    public static final DeferredRegister<StructurePieceType> REGISTER = DeferredRegister.create(Registry.STRUCTURE_PIECE_REGISTRY, Main.MODID);
 
     // As RecipeType is an interface, an anonymous class will be created for registering
     // Vanilla RecipeTypes override #toString for debugging purposes, so it is omitted in this example

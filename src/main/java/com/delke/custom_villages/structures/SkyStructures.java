@@ -1,8 +1,8 @@
-package com.telepathicgrunt.structuretutorial.structures;
+package com.delke.custom_villages.structures;
 
+import com.delke.custom_villages.Main;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import com.telepathicgrunt.structuretutorial.Main;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.levelgen.GenerationStep;

@@ -1,9 +1,9 @@
-package com.telepathicgrunt.structuretutorial;
+package com.delke.custom_villages;
 
-import com.telepathicgrunt.structuretutorial.client.ClientEvents;
-import com.telepathicgrunt.structuretutorial.network.Network;
-import com.telepathicgrunt.structuretutorial.network.StructureDebugPacket;
-import com.telepathicgrunt.structuretutorial.structures.VillageBuildablePiece;
+import com.delke.custom_villages.client.ClientEvents;
+import com.delke.custom_villages.network.Network;
+import com.delke.custom_villages.network.StructureDebugPacket;
+import com.delke.custom_villages.structures.VillageBuildablePiece;
 import it.unimi.dsi.fastutil.Pair;
 import it.unimi.dsi.fastutil.longs.LongSet;
 import net.minecraft.core.BlockPos;

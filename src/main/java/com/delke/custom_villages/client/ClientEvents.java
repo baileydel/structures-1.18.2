@@ -1,14 +1,14 @@
-package com.telepathicgrunt.structuretutorial.client;
+package com.delke.custom_villages.client;
 
+import com.delke.custom_villages.network.StructureDebugPacket;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.datafixers.util.Pair;
-import com.sun.jna.platform.mac.SystemB;
-import com.telepathicgrunt.structuretutorial.network.StructureDebugPacket;
-import com.telepathicgrunt.structuretutorial.structures.VillageBuildablePiece;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.block.BlockRenderDispatcher;
+import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.IdMapper;
 import net.minecraft.nbt.CompoundTag;
@@ -21,11 +21,18 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
+import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.event.RenderLevelStageEvent;
+import net.minecraftforge.client.model.data.EmptyModelData;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 
 import javax.annotation.Nullable;
-import java.util.*;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -33,6 +40,8 @@ import java.util.stream.Collectors;
  * @created 07/30/2023 - 12:16 PM
  * @project structures-1.18.2
  */
+
+@OnlyIn(Dist.CLIENT)
 public class ClientEvents {
 
     @SubscribeEvent
@@ -41,8 +50,6 @@ public class ClientEvents {
         Player player = mc.player;
 
         if (player != null && mc.level != null && event.getStage().equals(RenderLevelStageEvent.Stage.AFTER_CUTOUT_BLOCKS)) {
-            Camera camera = mc.gameRenderer.getMainCamera();
-
             for (Pair<CompoundTag, BoundingBox> pair : StructureDebugPacket.data) {
                 BoundingBox box = pair.getSecond();
                 CompoundTag tag = pair.getFirst();
@@ -59,11 +66,11 @@ public class ClientEvents {
                         Palette palette = loadPalette(paletteTag, blocksTag);
 
                         for (StructureTemplate.StructureBlockInfo info : palette.blocks()) {
-                            BlockState blockstate = info.state;
-                            BlockPos newPos = new BlockPos(box.minX(), box.minY(), box.minZ()).offset(info.pos);
+                            BlockState state = info.state;
+                            BlockPos pos = new BlockPos(box.minX(), box.minY(), box.minZ()).offset(info.pos);
 
-                            if (!blockstate.isAir()) {
-                                RenderingUtil.renderHitOutline(event.getPoseStack(), mc.renderBuffers().bufferSource().getBuffer(RenderType.lines()), camera, newPos, blockstate);
+                            if (!state.isAir()) {
+                                renderBlock(event.getPoseStack(), state, pos);
                             }
                         }
                     }
@@ -71,6 +78,42 @@ public class ClientEvents {
             }
         }
     }
+
+    private void renderBlock(PoseStack matrix, BlockState state, BlockPos pos) {
+        Minecraft mc = Minecraft.getInstance();
+
+        if (mc.level != null) {
+            BlockRenderDispatcher renderer = Minecraft.getInstance().getBlockRenderer();
+
+            Camera camera = mc.gameRenderer.getMainCamera();
+            Vec3 vec3 = camera.getPosition();
+
+            double d0 = vec3.x();
+            double d1 = vec3.y();
+            double d2 = vec3.z();
+
+
+            matrix.pushPose();
+            matrix.translate(
+                    (double)pos.getX() - d0,
+                    (double)pos.getY() - d1,
+                    (double)pos.getZ() - d2
+            );
+
+
+
+            renderer.renderSingleBlock(
+                    state,
+                    matrix,
+                    mc.renderBuffers().crumblingBufferSource(),
+                    15728880,
+                    OverlayTexture.WHITE_OVERLAY_V,
+                    EmptyModelData.INSTANCE
+            );
+            matrix.popPose();
+        }
+    }
+
 
     private Palette loadPalette(ListTag p_74621_, ListTag p_74622_) {
         SimplePalette structuretemplate$simplepalette = new SimplePalette();

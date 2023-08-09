@@ -1,7 +1,6 @@
-package com.telepathicgrunt.structuretutorial.network;
+package com.delke.custom_villages.network;
 
 import com.mojang.datafixers.util.Pair;
-import com.telepathicgrunt.structuretutorial.client.ClientEvents;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
