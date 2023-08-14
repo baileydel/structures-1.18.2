@@ -5,14 +5,13 @@ import com.mojang.blaze3d.vertex.*;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.client.renderer.block.BlockRenderDispatcher;
+import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.BlockPos;
-import net.minecraft.util.Mth;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.phys.Vec3;
-import net.minecraft.world.phys.shapes.CollisionContext;
-import net.minecraft.world.phys.shapes.VoxelShape;
+import net.minecraftforge.client.model.data.EmptyModelData;
 
 /**
  * @author Bailey Delker
@@ -92,31 +91,38 @@ public class RenderingUtil {
         bufferbuilder.vertex(maxX, h, maxZ).color(1.0F, 0.0F, 0.0F, 0.0F).endVertex();
     }
 
-    public static void renderHitOutline(PoseStack stack, VertexConsumer vertexConsumer, Camera camera, BlockPos p_109644_, BlockState p_109645_) {
-        Level level = Minecraft.getInstance().level;
+    public static void renderBlock(PoseStack matrix, BlockState state, BlockPos pos) {
+        Minecraft mc = Minecraft.getInstance();
 
-        if (level != null) {
+        if (mc.level != null) {
+            BlockRenderDispatcher renderer = Minecraft.getInstance().getBlockRenderer();
+
+            Camera camera = mc.gameRenderer.getMainCamera();
             Vec3 vec3 = camera.getPosition();
+
             double d0 = vec3.x();
             double d1 = vec3.y();
             double d2 = vec3.z();
 
-            renderShape(stack, vertexConsumer, p_109645_.getShape(level, p_109644_, CollisionContext.of(camera.getEntity())), (double)p_109644_.getX() - d0, (double)p_109644_.getY() - d1, (double)p_109644_.getZ() - d2);
-        }
-    }
 
-    private static void renderShape(PoseStack stack, VertexConsumer vertexConsumer, VoxelShape shape, double p_109786_, double p_109787_, double p_109788_) {
-        PoseStack.Pose posestack$pose = stack.last();
-        shape.forAllEdges((p_194324_, p_194325_, p_194326_, p_194327_, p_194328_, p_194329_) -> {
-            float f = (float)(p_194327_ - p_194324_);
-            float f1 = (float)(p_194328_ - p_194325_);
-            float f2 = (float)(p_194329_ - p_194326_);
-            float f3 = Mth.sqrt(f * f + f1 * f1 + f2 * f2);
-            f /= f3;
-            f1 /= f3;
-            f2 /= f3;
-            vertexConsumer.vertex(posestack$pose.pose(), (float)(p_194324_ + p_109786_), (float)(p_194325_ + p_109787_), (float)(p_194326_ + p_109788_)).color(1.0F, 1.0F, 1.0F, 1.5F).normal(posestack$pose.normal(), f, f1, f2).endVertex();
-            vertexConsumer.vertex(posestack$pose.pose(), (float)(p_194327_ + p_109786_), (float)(p_194328_ + p_109787_), (float)(p_194329_ + p_109788_)).color(1.0F, 1.0F, 1.0F, 1.5F).normal(posestack$pose.normal(), f, f1, f2).endVertex();
-        });
+            matrix.pushPose();
+            matrix.translate(
+                    (double)pos.getX() - d0,
+                    (double)pos.getY() - d1,
+                    (double)pos.getZ() - d2
+            );
+
+
+
+            renderer.renderSingleBlock(
+                    state,
+                    matrix,
+                    mc.renderBuffers().crumblingBufferSource(),
+                    15728880,
+                    OverlayTexture.WHITE_OVERLAY_V,
+                    EmptyModelData.INSTANCE
+            );
+            matrix.popPose();
+        }
     }
 }
