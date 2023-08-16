@@ -31,8 +31,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 
-import static com.delke.custom_villages.STStructures.VILLAGE_BUILDABLE_PIECE;
-
 /*
    This is only used for village structures,
  */
@@ -47,7 +45,7 @@ public class VillageBuildablePiece extends StructurePiece {
     private CompoundTag tag;
 
     public VillageBuildablePiece(StructureManager p_209910_, StructurePoolElement p_209911_, BlockPos p_209912_, int p_209913_, Rotation p_209914_, BoundingBox p_209915_) {
-        super(VILLAGE_BUILDABLE_PIECE.get(), 0, p_209915_);
+        super(STStructures.VILLAGE_BUILDABLE_PIECE.get(), 0, p_209915_);
         this.structureManager = p_209910_;
         this.element = p_209911_;
         this.position = p_209912_;
@@ -56,7 +54,7 @@ public class VillageBuildablePiece extends StructurePiece {
     }
 
     public VillageBuildablePiece(StructurePieceSerializationContext p_192406_, CompoundTag p_192407_) {
-        super(VILLAGE_BUILDABLE_PIECE.get(), p_192407_);
+        super(STStructures.VILLAGE_BUILDABLE_PIECE.get(), p_192407_);
         this.structureManager = p_192406_.structureManager();
         this.position = new BlockPos(p_192407_.getInt("PosX"), p_192407_.getInt("PosY"), p_192407_.getInt("PosZ"));
         this.groundLevelDelta = p_192407_.getInt("ground_level_delta");
@@ -95,7 +93,7 @@ public class VillageBuildablePiece extends StructurePiece {
     }
 
     public void place(@NotNull WorldGenLevel genLevel, @NotNull StructureFeatureManager featureManager, @NotNull ChunkGenerator chunkGenerator, @NotNull Random random, @NotNull BoundingBox boundingBox, @NotNull BlockPos blockPos, boolean idk) {
-        //this.element.place(this.structureManager, genLevel, featureManager, chunkGenerator, this.position, blockPos , this.rotation, boundingBox, random, idk);
+        this.element.place(this.structureManager, genLevel, featureManager, chunkGenerator, this.position, blockPos , this.rotation, boundingBox, random, idk);
     }
 
     public void move(int p_72616_, int p_72617_, int p_72618_) {
