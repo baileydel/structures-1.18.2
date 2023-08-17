@@ -1,46 +1,26 @@
 package com.delke.custom_villages.client;
 
-import ca.weblite.objc.mappers.StructureMapping;
-import com.delke.custom_villages.Main;
+import com.delke.custom_villages.network.ForcePacket;
+import com.delke.custom_villages.network.Network;
 import com.delke.custom_villages.network.StructureDebugPacket;
-import com.delke.custom_villages.structures.STStructures;
-import com.delke.custom_villages.structures.SkyStructures;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.mojang.datafixers.util.Pair;
-import it.unimi.dsi.fastutil.longs.LongSet;
 import net.minecraft.client.Minecraft;
-import net.minecraft.core.*;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.IdMapper;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtUtils;
-import net.minecraft.network.chat.TextComponent;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.EmptyBlockGetter;
-import net.minecraft.world.level.StructureFeatureManager;
-import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.chunk.ChunkAccess;
-import net.minecraft.world.level.chunk.ChunkGenerator;
-import net.minecraft.world.level.chunk.ChunkStatus;
-import net.minecraft.world.level.levelgen.LegacyRandomSource;
-import net.minecraft.world.level.levelgen.WorldgenRandom;
-import net.minecraft.world.level.levelgen.feature.ConfiguredStructureFeature;
-import net.minecraft.world.level.levelgen.feature.VoidStartPlatformFeature;
-import net.minecraft.world.level.levelgen.feature.configurations.JigsawConfiguration;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
-import net.minecraft.world.level.levelgen.structure.StructureSet;
-import net.minecraft.world.level.levelgen.structure.StructureStart;
-import net.minecraft.world.level.levelgen.structure.pieces.PieceGenerator;
-import net.minecraft.world.level.levelgen.structure.pieces.PieceGeneratorSupplier;
-import net.minecraft.world.level.levelgen.structure.pieces.StructurePiecesBuilder;
-import net.minecraft.world.level.levelgen.structure.pools.StructureTemplatePool;
-import net.minecraft.world.level.levelgen.structure.templatesystem.StructureManager;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
@@ -49,13 +29,11 @@ import net.minecraftforge.client.event.RenderLevelStageEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 
 import javax.annotation.Nullable;
-import java.util.*;
-import java.util.function.Predicate;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
-
-import static com.delke.custom_villages.Main.MODID;
-import static net.minecraft.core.Registry.TEMPLATE_POOL_REGISTRY;
-import static net.minecraft.tags.BiomeTags.IS_TAIGA;
 
 /**
  * @author Bailey Delker
@@ -66,80 +44,13 @@ import static net.minecraft.tags.BiomeTags.IS_TAIGA;
 @OnlyIn(Dist.CLIENT)
 public class ClientEvents {
 
-    boolean loaded = false;
     @SubscribeEvent
     public void OnKey(InputEvent.KeyInputEvent event) {
         Minecraft mc = Minecraft.getInstance();
-
-        if (!loaded && mc.player != null && event.getKey() == 67 && mc.getSingleplayerServer() != null && mc.level != null) {
-            ServerLevel level = mc.getSingleplayerServer().getLevel(mc.level.dimension());
-
-            if (level != null) {
-                ConfiguredStructureFeature<?, ?> structureFeature = makeStructure();
-
-                StructureManager structureManager = level.getStructureManager();
-                StructureFeatureManager featureManager = level.structureFeatureManager();
-                RegistryAccess registryAccess = level.registryAccess();
-
-                long seed = -234892394;
-
-                ChunkAccess chunkAccess = level.getChunk(0, 0);
-                ChunkPos chunkPos = new ChunkPos(0, 0);
-
-                SectionPos sectionPos = SectionPos.of(chunkPos, 0);
-
-                ChunkGenerator chunkGenerator = level.getChunkSource().getGenerator();
-
-                if (tryGenerateStructure(structureFeature, chunkGenerator, featureManager, registryAccess, structureManager, seed, chunkAccess, chunkPos, sectionPos)) {
-                    System.out.println("dub");
-                }
-                else {
-                    System.out.println("hm");
-                }
-            }
+        if (mc.player != null && event.getKey() == 61 && mc.level != null) {
+            System.out.println("Client - Trying to send Force");
+            Network.INSTANCE.sendToServer(new ForcePacket());
         }
-    }
-
-    private ConfiguredStructureFeature<?, ?> makeStructure() {
-        Minecraft mc = Minecraft.getInstance();
-
-        if (mc.level != null && mc.getSingleplayerServer() != null) {
-            ServerLevel level = mc.getSingleplayerServer().getLevel(mc.level.dimension());
-
-            if (level != null) {
-                StructureTemplatePool pool = level.registryAccess().registryOrThrow(TEMPLATE_POOL_REGISTRY).get(new ResourceLocation(MODID, "sky_fan"));
-
-                if (pool != null) {
-                    Holder<StructureTemplatePool> holder = Holder.direct(pool);
-                    return STStructures.SKY_STRUCTURES.get().configured(new JigsawConfiguration(holder, 6), IS_TAIGA);
-                }
-            }
-        }
-        return null;
-    }
-
-    private boolean tryGenerateStructure(ConfiguredStructureFeature<?, ?> configuredstructurefeature, ChunkGenerator generator, StructureFeatureManager p_208018_, RegistryAccess p_208019_, StructureManager p_208020_, long p_208021_, ChunkAccess p_208022_, ChunkPos p_208023_, SectionPos p_208024_) {
-        int i = fetchReferences(p_208018_, p_208022_, p_208024_, configuredstructurefeature);
-        HolderSet<Biome> holderset = configuredstructurefeature.biomes();
-
-        Predicate<Holder<Biome>> predicate = (p_211672_) -> holderset.contains(this.adjustBiome(p_211672_));
-
-        StructureStart structurestart = configuredstructurefeature.generate(p_208019_, generator, generator.getBiomeSource(), p_208020_, p_208021_, p_208023_, i, p_208022_, predicate);
-        if (structurestart.isValid()) {
-            p_208018_.setStartForFeature(p_208024_, configuredstructurefeature, structurestart, p_208022_);
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    private static int fetchReferences(StructureFeatureManager p_207977_, ChunkAccess p_207978_, SectionPos p_207979_, ConfiguredStructureFeature<?, ?> p_207980_) {
-        StructureStart structurestart = p_207977_.getStartForFeature(p_207979_, p_207980_, p_207978_);
-        return structurestart != null ? structurestart.getReferences() : 0;
-    }
-
-    protected Holder<Biome> adjustBiome(Holder<Biome> p_204385_) {
-        return p_204385_;
     }
 
     @SubscribeEvent
@@ -176,7 +87,6 @@ public class ClientEvents {
             }
         }
     }
-
 
     private Palette loadPalette(ListTag p_74621_, ListTag p_74622_) {
         SimplePalette structuretemplate$simplepalette = new SimplePalette();
