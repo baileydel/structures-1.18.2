@@ -8,7 +8,6 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.levelgen.GenerationStep;
 import net.minecraft.world.level.levelgen.feature.StructureFeature;
 import net.minecraft.world.level.levelgen.feature.configurations.JigsawConfiguration;
-import net.minecraft.world.level.levelgen.structure.BuiltinStructureSets;
 import net.minecraft.world.level.levelgen.structure.PostPlacementProcessor;
 import net.minecraft.world.level.levelgen.structure.pieces.PieceGenerator;
 import net.minecraft.world.level.levelgen.structure.pieces.PieceGeneratorSupplier;
@@ -22,12 +21,12 @@ public class SkyStructures extends StructureFeature<JigsawConfiguration> {
 
     // A custom codec that changes the size limit for our code_structure_sky_fan.json's config to not be capped at 7.
     // With this, we can have a structure with a size limit up to 30 if we want to have extremely long branches of pieces in the structure.
-    public static final Codec<JigsawConfiguration> CODEC = RecordCodecBuilder.create((codec) -> {
-        return codec.group(
+    public static final Codec<JigsawConfiguration> CODEC = RecordCodecBuilder.create((codec) ->
+        codec.group(
                 StructureTemplatePool.CODEC.fieldOf("start_pool").forGetter(JigsawConfiguration::startPool),
                 Codec.intRange(0, 30).fieldOf("size").forGetter(JigsawConfiguration::maxDepth)
-        ).apply(codec, JigsawConfiguration::new);
-    });
+        ).apply(codec, JigsawConfiguration::new)
+    );
 
     public SkyStructures() {
         // Create the pieces layout of the structure and give it to the game
@@ -72,16 +71,14 @@ public class SkyStructures extends StructureFeature<JigsawConfiguration> {
 
         // Checks to make sure our structure does not spawn within 10 chunks of an Ocean Monument
         // to demonstrate how this method is good for checking extra conditions for spawning
-        return !context.chunkGenerator().hasFeatureChunkInRange(BuiltinStructureSets.OCEAN_MONUMENTS, context.seed(), chunkpos.x, chunkpos.z, 10);
+        //return !context.chunkGenerator().hasFeatureChunkInRange(BuiltinStructureSets.OCEAN_MONUMENTS, context.seed(), chunkpos.x, chunkpos.z, 10);'
+        return true;
     }
+
 
     public static Optional<PieceGenerator<JigsawConfiguration>> createPiecesGenerator(PieceGeneratorSupplier.Context<JigsawConfiguration> context) {
         // Check if the spot is valid for our structure. This is just as another method for cleanness.
         // Returning an empty optional tells the game to skip this spot as it will not generate the structure.
-        if (!SkyStructures.isFeatureChunk(context)) {
-            return Optional.empty();
-        }
-
         // Turns the chunk coordinates into actual coordinates we can use. (Gets center of that chunk)
         BlockPos blockpos = context.chunkPos().getMiddleBlockPosition(0);
 
@@ -107,7 +104,6 @@ public class SkyStructures extends StructureFeature<JigsawConfiguration> {
          * Note, you are always free to make your own JigsawPlacement class and implementation of how the structure
          * should generate. It is tricky but extremely powerful if you are doing something that vanilla's jigsaw system cannot do.
          * Such as for example, forcing 3 pieces to always spawn every time, limiting how often a piece spawns, or remove the intersection limitation of pieces.
-         *
          * An example of a custom JigsawPlacement.addPieces in action can be found here (warning, it is using Mojmap mappings):
          * https://github.com/TelepathicGrunt/RepurposedStructures/blob/1.18.2/src/main/java/com/telepathicgrunt/repurposedstructures/world/structures/pieces/PieceLimitedJigsawManager.java
          */
