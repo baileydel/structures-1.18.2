@@ -24,5 +24,6 @@ public class Network {
 
     public static void init() {
         INSTANCE.registerMessage(0, StructureDebugPacket.class, StructureDebugPacket::write, StructureDebugPacket::new, StructureDebugPacket::handle, Optional.of(NetworkDirection.PLAY_TO_CLIENT));
-   }
+        INSTANCE.registerMessage(1, ForcePacket.class, ForcePacket::write, ForcePacket::new, ForcePacket::handle);
+    }
 }
