@@ -52,7 +52,7 @@ public class StructureDebugPacket {
                     if (!data.contains(pair)) {
                         data.add(pair);
 
-                        System.out.println("Client - Adding new Box " + pair);
+                        System.out.println("Client - Adding new Box " + pair.getSecond());
                     }
                 })
         );
