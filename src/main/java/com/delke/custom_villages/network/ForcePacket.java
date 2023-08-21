@@ -43,38 +43,35 @@ public class ForcePacket {
     public static void handle(ForcePacket msg, Supplier<NetworkEvent.Context> context) {
         NetworkEvent.Context ctx = context.get();
         ctx.enqueueWork(() -> {
-            if (!loaded) {
-                loaded = true;
-                System.out.println("server handling");
+            System.out.println("server handling");
 
-                if (ctx.getSender() != null) {
-                    ServerLevel level = ctx.getSender().getLevel();
-                    ConfiguredStructureFeature<?, ?> structureFeature = makeStructure();
-                    ChunkAccess chunkAccess = level.getChunk(STATIC_START.x, STATIC_START.z);
+            if (ctx.getSender() != null) {
+                ServerLevel level = ctx.getSender().getLevel();
+                ConfiguredStructureFeature<?, ?> structureFeature = makeStructure();
+                ChunkAccess chunkAccess = level.getChunk(STATIC_START.x, STATIC_START.z);
 
-                    if (structureFeature != null) {
-                        Main.poses.remove(STATIC_START);
-                        long seed = -234892394;
-                        StructureManager structureManager = level.getStructureManager();
-                        StructureFeatureManager featureManager = level.structureFeatureManager();
-                        RegistryAccess registryAccess = level.registryAccess();
+                if (structureFeature != null) {
 
-                        SectionPos sectionPos = SectionPos.of(STATIC_START, 0);
-                        ChunkGenerator chunkGenerator = level.getChunkSource().getGenerator();
-                        StructureStart start = tryGenerateStructure(structureFeature, chunkGenerator, featureManager, registryAccess, structureManager, seed, chunkAccess, STATIC_START, sectionPos);
+                    Main.posList.remove(STATIC_START);
 
-                        chunkAccess.setStartForFeature(structureFeature,start );
-                        chunkAccess.addReferenceForFeature(structureFeature, ChunkPos.asLong(0, 0));
+                    long seed = -234892394;
+                    StructureManager structureManager = level.getStructureManager();
+                    StructureFeatureManager featureManager = level.structureFeatureManager();
+                    RegistryAccess registryAccess = level.registryAccess();
 
-                        WorldgenRandom worldgenrandom = new WorldgenRandom(new XoroshiroRandomSource(RandomSupport.seedUniquifier()));
+                    SectionPos sectionPos = SectionPos.of(STATIC_START, 0);
+                    ChunkGenerator chunkGenerator = level.getChunkSource().getGenerator();
+                    StructureStart start = tryGenerateStructure(structureFeature, chunkGenerator, featureManager, registryAccess, structureManager, seed, chunkAccess, STATIC_START, sectionPos);
 
-                        if (start != StructureStart.INVALID_START) {
-                            BoundingBox box = getWritableArea(chunkAccess);
+                    chunkAccess.setStartForFeature(structureFeature,start );
+                    chunkAccess.addReferenceForFeature(structureFeature, ChunkPos.asLong(0, 0));
 
-                            featureManager.startsForFeature(sectionPos, structureFeature).forEach((p_211647_) -> {
-                                p_211647_.placeInChunk(level, featureManager, chunkGenerator, worldgenrandom, box, STATIC_START);
-                            });
-                        }
+                    WorldgenRandom worldgenrandom = new WorldgenRandom(new XoroshiroRandomSource(RandomSupport.seedUniquifier()));
+
+                    if (start != StructureStart.INVALID_START) {
+                        BoundingBox box = getWritableArea(chunkAccess);
+
+                        featureManager.startsForFeature(sectionPos, structureFeature).forEach((p_211647_) -> p_211647_.placeInChunk(level, featureManager, chunkGenerator, worldgenrandom, box, STATIC_START));
                     }
                 }
             }
@@ -108,16 +105,18 @@ public class ForcePacket {
         return null;
     }
 
-    private static StructureStart tryGenerateStructure(ConfiguredStructureFeature<?, ?> configuredstructurefeature, ChunkGenerator generator, StructureFeatureManager featureManager, RegistryAccess p_208019_, StructureManager p_208020_, long p_208021_, ChunkAccess access, ChunkPos p_208023_, SectionPos sectionPos) {
+    private static StructureStart tryGenerateStructure(ConfiguredStructureFeature<?, ?> configuredstructurefeature, ChunkGenerator generator, StructureFeatureManager featureManager, RegistryAccess access, StructureManager p_208020_, long p_208021_, ChunkAccess chunkAccess, ChunkPos chunkPos, SectionPos sectionPos) {
         try {
-            int i = fetchReferences(featureManager, access, sectionPos, configuredstructurefeature);
+            int i = fetchReferences(featureManager, chunkAccess, sectionPos, configuredstructurefeature);
 
-            HolderSet<Biome> holderset = configuredstructurefeature.biomes();
-            Predicate<Holder<Biome>> predicate = (holder) -> holderset.contains(adjustBiome(holder));
+            Predicate<Holder<Biome>> predicate = (w) -> {
+                System.out.println(w);
+                return true;
+            };
 
-            StructureStart structurestart =  configuredstructurefeature.generate(p_208019_, generator, generator.getBiomeSource(), p_208020_, p_208021_, p_208023_, i, access, predicate);
+            StructureStart structurestart =  configuredstructurefeature.generate(access, generator, generator.getBiomeSource(), p_208020_, p_208021_, chunkPos, i, chunkAccess, predicate);
             if (structurestart.isValid()) {
-                featureManager.setStartForFeature(sectionPos, configuredstructurefeature, structurestart, access);
+                featureManager.setStartForFeature(sectionPos, configuredstructurefeature, structurestart, chunkAccess);
                 return structurestart;
             }
         }
@@ -132,7 +131,4 @@ public class ForcePacket {
         return structurestart != null ? structurestart.getReferences() : 0;
     }
 
-    protected static Holder<Biome> adjustBiome(Holder<Biome> p_204385_) {
-        return p_204385_;
-    }
 }
