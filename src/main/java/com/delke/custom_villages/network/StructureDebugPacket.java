@@ -42,7 +42,7 @@ public class StructureDebugPacket {
     }
 
     /*
-        Only ever handle data on client (one way packet)
+        Only handle data on client (one way packet)
      */
     public static void handle(StructureDebugPacket msg, Supplier<NetworkEvent.Context> ctx) {
         ctx.get().enqueueWork(() ->
