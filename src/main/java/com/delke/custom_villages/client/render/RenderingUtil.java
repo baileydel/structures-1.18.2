@@ -1,4 +1,4 @@
-package com.delke.custom_villages.client;
+package com.delke.custom_villages.client.render;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
@@ -21,6 +21,9 @@ import net.minecraftforge.client.model.data.EmptyModelData;
 public class RenderingUtil {
     public static void renderBoundingBox(PoseStack stack, BoundingBox box) {
         PoseStack posestack = RenderSystem.getModelViewStack();
+        Tesselator tesselator = Tesselator.getInstance();
+        BufferBuilder bufferbuilder = tesselator.getBuilder();
+
         posestack.pushPose();
         posestack.mulPoseMatrix(stack.last().pose());
         RenderSystem.applyModelViewMatrix();
@@ -28,8 +31,6 @@ public class RenderingUtil {
 
         RenderSystem.enableDepthTest();
         RenderSystem.setShader(GameRenderer::getPositionColorShader);
-        Tesselator tesselator = Tesselator.getInstance();
-        BufferBuilder bufferbuilder = tesselator.getBuilder();
 
         RenderSystem.disableTexture();
         RenderSystem.disableBlend();
@@ -96,7 +97,6 @@ public class RenderingUtil {
 
         if (mc.level != null) {
             BlockRenderDispatcher renderer = Minecraft.getInstance().getBlockRenderer();
-
             Camera camera = mc.gameRenderer.getMainCamera();
             Vec3 vec3 = camera.getPosition();
 
@@ -104,15 +104,12 @@ public class RenderingUtil {
             double d1 = vec3.y();
             double d2 = vec3.z();
 
-
             matrix.pushPose();
             matrix.translate(
                     (double)pos.getX() - d0,
                     (double)pos.getY() - d1,
                     (double)pos.getZ() - d2
             );
-
-
 
             renderer.renderSingleBlock(
                     state,
