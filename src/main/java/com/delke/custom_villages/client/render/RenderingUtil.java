@@ -36,33 +36,33 @@ public class RenderingUtil {
         RenderSystem.disableBlend();
 
         double minX = box.minX() - vec3.x();
-        double minH = box.minY() - vec3.y();
+        double minY = box.minY() - vec3.y();
         double minZ = box.minZ() - vec3.z();
 
         double maxX = box.maxX() + 1 - vec3.x();
-        double maxH = box.maxY() + 1 - vec3.y();
+        double maxY = box.maxY() + 1 - vec3.y();
         double maxZ = box.maxZ() + 1 - vec3.z();
 
         RenderSystem.lineWidth(2.0F);
         bufferbuilder.begin(VertexFormat.Mode.DEBUG_LINE_STRIP, DefaultVertexFormat.POSITION_COLOR);
 
-        renderVerticalLine(minX, minH, maxH, minZ);
-        renderVerticalLine(minX, minH, maxH, maxZ);
+        renderVerticalLine(minX, minY, maxY, minZ, 1.0F, 1.0F, 1.0F, 1.0F);
+        renderVerticalLine(minX, minY, maxY, maxZ);
 
-        renderVerticalLine(maxX, minH, maxH, maxZ);
-        renderVerticalLine(maxX, minH, maxH, minZ);
+        renderVerticalLine(maxX, minY, maxY, maxZ, 0.0F, 1.0F, 0.0F, 1.0F);
+        renderVerticalLine(maxX, minY, maxY, minZ);
 
-        renderHorizontalLine(minX, maxX, minH, minZ, minZ);
-        renderHorizontalLine(minX, maxX, maxH, minZ, minZ);
+        renderHorizontalLine(minX, maxX, minY, minZ, minZ);
+        renderHorizontalLine(minX, maxX, maxY, minZ, minZ);
 
-        renderHorizontalLine(minX, minX, minH, minZ, maxZ);
-        renderHorizontalLine(minX, minX, maxH, minZ, maxZ);
+        renderHorizontalLine(minX, minX, minY, minZ, maxZ);
+        renderHorizontalLine(minX, minX, maxY, minZ, maxZ);
 
-        renderHorizontalLine(minX, maxX, minH, maxZ, maxZ);
-        renderHorizontalLine(minX, maxX, maxH, maxZ, maxZ);
+        renderHorizontalLine(minX, maxX, minY, maxZ, maxZ);
+        renderHorizontalLine(minX, maxX, maxY, maxZ, maxZ);
 
-        renderHorizontalLine(maxX, maxX, maxH, minZ, maxZ);
-        renderHorizontalLine(maxX, maxX, minH, minZ, maxZ);
+        renderHorizontalLine(maxX, maxX, maxY, minZ, maxZ);
+        renderHorizontalLine(maxX, maxX, minY, minZ, maxZ);
 
         tesselator.end();
         RenderSystem.lineWidth(2.0F);
@@ -73,13 +73,17 @@ public class RenderingUtil {
     }
 
     private static void renderVerticalLine(double x, double minH, double maxH, double z) {
+        renderVerticalLine(x, minH, maxH, z, 1.0F, 0.0F, 0.0F, 1.0F);
+    }
+
+    private static void renderVerticalLine(double x, double minH, double maxH, double z, float r, float g, float b, float a) {
         Tesselator tesselator = Tesselator.getInstance();
         BufferBuilder bufferbuilder = tesselator.getBuilder();
 
-        bufferbuilder.vertex(x, minH, z).color(1.0F, 0.0F, 0.0F, 0.0F).endVertex();
-        bufferbuilder.vertex(x, minH, z).color(1.0F, 0.0F, 0.0F, 0.5F).endVertex();
-        bufferbuilder.vertex(x, maxH, z).color(1.0F, 0.0F, 0.0F, 0.5F).endVertex();
-        bufferbuilder.vertex(x, maxH, z).color(1.0F, 0.0F, 0.0F, 0.0F).endVertex();
+        bufferbuilder.vertex(x, minH, z).color(r, g, b, 0).endVertex();
+        bufferbuilder.vertex(x, minH, z).color(r, g, b, a).endVertex();
+        bufferbuilder.vertex(x, maxH, z).color(r, g, b, a).endVertex();
+        bufferbuilder.vertex(x, maxH, z).color(r, g, b, 0).endVertex();
     }
 
     private static void renderHorizontalLine(double minX, double maxX, double h, double minZ, double maxZ) {
