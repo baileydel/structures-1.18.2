@@ -4,6 +4,7 @@ import com.delke.custom_villages.client.render.RenderingUtil;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.Tesselator;
+import com.mojang.datafixers.util.Pair;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -12,14 +13,20 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -28,23 +35,43 @@ import java.util.Map;
  * @created 08/20/2023 - 1:55 PM
  * @project structures-1.18.2
  */
-
 @OnlyIn(Dist.CLIENT)
 public class BuildablePiece {
     private final BoundingBox box;
+
+    @Nullable
     private final ModPalette palette;
 
-    public BuildablePiece(BoundingBox box, CompoundTag tag) {
+    private final Rotation rotation;
+
+    /*
+        STOP-SHIP
+        When a block is changed inside a bounding box, we should update it.
+        Either use event bus's and make remaining compatible with multiple pieces / structures at the same time
+        or constantly check in rendering
+
+        either way constantly checking in rendering will always be slower
+     */
+    private final Map<Block, List<StructureTemplate.StructureBlockInfo>> remaining = new HashMap<>();
+
+    public BuildablePiece(CompoundTag tag, BoundingBox box, Rotation rotation) {
         this.box = box;
-        this.palette = new ModPalette(tag);
+        this.rotation = rotation;
+
+        if (tag != null) {
+            this.palette = new ModPalette(tag);
+        }
+        else {
+            this.palette = null;
+        }
     }
 
     public void renderGui(PoseStack stack) {
         Minecraft mc = Minecraft.getInstance();
-        Font font = mc.font;
         Player player = mc.player;
 
-        if (player != null) {
+        if (player != null && box.getCenter().closerThan(player.getOnPos(), mc.options.renderDistance * 16)) {
+            Font font = mc.font;
             Vec3 vec3 = player.getViewVector(1.0F).normalize();
 
             BoundingBox expanded = box.inflatedBy(3);
@@ -106,9 +133,10 @@ public class BuildablePiece {
             if (player.getBoundingBox().intersects(box.minX(), box.minY(), box.minZ(), box.maxX(), box.maxY(), box.maxZ()) || isLookingAtBox) {
                 int y = mc.getWindow().getGuiScaledHeight() / 3;
 
-                for (Map.Entry<Block, List<StructureTemplate.StructureBlockInfo>> entry : palette.getCache().entrySet()) {
-                    font.drawShadow(stack, entry.getValue().size() + "", 50 + 18, y + 3, 23721831);
-                    renderCustomSlot(new ItemStack(entry.getKey().asItem()), 50, y);
+                for (Map.Entry<Block, List<StructureTemplate.StructureBlockInfo>> entry : remaining.entrySet()) {
+                    int x = mc.getWindow().getGuiScaledWidth() - 30;
+                    font.drawShadow(stack, entry.getValue().size() + "", x - 18, y + 3, 23721831);
+                    renderCustomSlot(new ItemStack(entry.getKey().asItem()), x, y);
                     y += 18;
                 }
             }
@@ -116,22 +144,40 @@ public class BuildablePiece {
     }
 
     public void renderWorld(PoseStack stack) {
-        for (StructureTemplate.StructureBlockInfo info : palette.blocks()) {
-            BlockState state = info.state;
-            BlockPos pos = new BlockPos(box.minX(), box.minY(), box.minZ()).offset(info.pos);
+        RenderingUtil.renderBoundingBox(stack, box);
 
-            if (!state.isAir()) {
-                RenderingUtil.renderBlock(stack, state, pos);
+        if (palette != null) {
+            checkBlocks();
+
+            for (List<StructureTemplate.StructureBlockInfo> infos : remaining.values()) {
+                for (StructureTemplate.StructureBlockInfo info : infos) {
+                    BlockState state = info.state;
+                    BlockPos minPos = new BlockPos(box.minX(), box.minY(), box.minZ());
+
+                    BlockPos relativePos = info.pos;
+
+                    switch (rotation) {
+                        case COUNTERCLOCKWISE_90:
+                            relativePos = new BlockPos(relativePos.getZ(), relativePos.getY(), -relativePos.getX());
+                            break;
+                        case CLOCKWISE_180:
+                            relativePos = new BlockPos(-relativePos.getX(), relativePos.getY(), -relativePos.getZ());
+                            break;
+                        case CLOCKWISE_90:
+                            relativePos = new BlockPos(-relativePos.getZ(), relativePos.getY(), relativePos.getX());
+                            break;
+
+                    }
+
+                    // Translate to world position
+                    BlockPos actualPos = minPos.offset(relativePos);
+
+                    if (!state.isAir()) {
+                        RenderingUtil.renderBlock(stack, state, actualPos);
+                    }
+                }
             }
         }
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (obj instanceof BuildablePiece piece) {
-            return box.equals(piece.box);
-        }
-        return false;
     }
 
     private void renderCustomSlot(ItemStack itemstack, int x, int y) {
@@ -163,5 +209,72 @@ public class BuildablePiece {
             }
             itemRenderer.blitOffset = 0.0F;
         }
+    }
+
+    private void checkBlocks() {
+        Minecraft mc = Minecraft.getInstance();
+        Level level = mc.level;
+
+        if (level != null && palette != null) {
+            remaining.clear();
+            remaining.putAll(palette.getCache());
+
+            List<Pair<BlockPos, BlockState>> blocks = getAllPlacedBlocks();
+            for (Pair<BlockPos, BlockState> pair : blocks) {
+                List<StructureTemplate.StructureBlockInfo> t = remaining.get(pair.getSecond().getBlock());
+
+                if (t != null) {
+                    List<StructureTemplate.StructureBlockInfo> list = new ArrayList<>(t);
+                    List<StructureTemplate.StructureBlockInfo> remove = new ArrayList<>();
+
+                    for (StructureTemplate.StructureBlockInfo info : list) {
+                        BlockPos minPos = new BlockPos(box.minX(), box.minY(), box.minZ());
+                        BlockPos pos = minPos.offset(info.pos);
+
+                        if (pos.equals(pair.getFirst())) {
+                            remove.add(info);
+                        }
+                    }
+
+                    if (remove.size() > 0) {
+                        list.removeAll(remove);
+                        remaining.put(pair.getSecond().getBlock(), list);
+                    }
+                }
+            }
+        }
+    }
+
+    private List<Pair<BlockPos, BlockState>> getAllPlacedBlocks() {
+        List<Pair<BlockPos, BlockState>> states = new ArrayList<>();
+        Level level = Minecraft.getInstance().level;
+
+        if (level != null) {
+            for (int x = box.minX(); x <= box.maxX(); x++) {
+                for (int y = box.minY(); y <= box.maxY(); y++) {
+                    for (int z = box.minZ(); z <= box.maxZ(); z++) {
+                        BlockPos pos = new BlockPos(x, y, z);
+                        BlockState state = level.getBlockState(pos);
+
+                        if (!state.isAir()) {
+                            states.add(Pair.of(pos, state));
+                        }
+                    }
+                }
+            }
+        }
+        return states;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof BuildablePiece piece) {
+            return box.equals(piece.box);
+        }
+        return false;
+    }
+
+    public BoundingBox getBox() {
+        return this.box;
     }
 }
