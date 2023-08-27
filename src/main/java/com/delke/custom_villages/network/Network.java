@@ -11,7 +11,7 @@ import java.util.Optional;
 /**
  * @author Bailey Delker
  * @created 06/20/2023 - 7:15 AM
- * @project Villagers-1.18.2
+ * @project structures-1.18.2
  */
 public class Network {
     private static final String PROTOCOL_VERSION = "1";
