@@ -1,44 +1,67 @@
 package com.delke.custom_villages.network;
 
-import com.mojang.datafixers.util.Pair;
+import com.delke.custom_villages.client.BuildablePiece;
+import com.delke.custom_villages.client.ClientEvents;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.network.NetworkEvent;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.function.Supplier;
 
+/**
+ * @author Bailey Delker
+ * @created 06/20/2023 - 7:15 AM
+ * @project structures-1.18.2
+ */
 public class StructureDebugPacket {
-    // List of all data for client
-    public static final List<Pair<CompoundTag, BoundingBox>> data = new ArrayList<>();
-
     @Nullable
     private final CompoundTag tag;
-    private final BlockPos one;
-    private final BlockPos two;
+    private final BlockPos min;
+    private final BlockPos max;
+    private final Rotation rotation;
 
-    public StructureDebugPacket(@Nullable CompoundTag tag, BlockPos one, BlockPos two) {
+    public StructureDebugPacket(@Nullable CompoundTag tag, BlockPos one, BlockPos two, Rotation rotation) {
         this.tag = tag;
-        this.one = one;
-        this.two = two;
+        this.min = one;
+        this.max = two;
+        this.rotation = rotation;
+
+        if (tag != null) {
+            this.tag.putString("rotation", rotation.toString());
+        }
     }
 
     public StructureDebugPacket(FriendlyByteBuf buf) {
         tag = buf.readAnySizeNbt();
-        one = buf.readBlockPos();
-        two = buf.readBlockPos();
+        min = buf.readBlockPos();
+        max = buf.readBlockPos();
+        rotation = getRotation(tag);
     }
 
     public void write(FriendlyByteBuf buf) {
         buf.writeNbt(tag);
-        buf.writeBlockPos(one);
-        buf.writeBlockPos(two);
+        buf.writeBlockPos(min);
+        buf.writeBlockPos(max);
+    }
+
+    private Rotation getRotation(CompoundTag tag) {
+        String r = "";
+        if (tag != null) {
+            r = tag.getString("rotation");
+        }
+
+        return switch (r) {
+            case "CLOCKWISE_90" -> Rotation.CLOCKWISE_90;
+            case "CLOCKWISE_180" -> Rotation.CLOCKWISE_180;
+            case "COUNTERCLOCKWISE_90" -> Rotation.COUNTERCLOCKWISE_90;
+            default -> Rotation.NONE;
+        };
     }
 
     /*
@@ -47,12 +70,11 @@ public class StructureDebugPacket {
     public static void handle(StructureDebugPacket msg, Supplier<NetworkEvent.Context> ctx) {
         ctx.get().enqueueWork(() ->
                 DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
-                    Pair<CompoundTag, BoundingBox> pair = Pair.of(msg.tag, BoundingBox.fromCorners(msg.one, msg.two));
+                    BuildablePiece piece = new BuildablePiece(msg.tag, BoundingBox.fromCorners(msg.min, msg.max), msg.rotation);
 
-                    if (!data.contains(pair)) {
-                        data.add(pair);
-
-                        System.out.println("Client - Adding new Box " + pair.getSecond());
+                    if (!ClientEvents.pieces.contains(piece)) {
+                        ClientEvents.pieces.add(piece);
+                        System.out.println("Client - Adding new Box ");
                     }
                 })
         );
