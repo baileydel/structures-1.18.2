@@ -12,12 +12,10 @@ import net.minecraft.core.SectionPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.chunk.ChunkStatus;
 import net.minecraft.world.level.levelgen.feature.ConfiguredStructureFeature;
-import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.StructurePiece;
 import net.minecraft.world.level.levelgen.structure.StructureStart;
 import net.minecraftforge.common.MinecraftForge;
@@ -29,9 +27,9 @@ import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.network.NetworkDirection;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -43,7 +41,7 @@ import java.util.Map;
 @Mod(Main.MODID)
 public class Main {
     public static final String MODID = "structure_tutorial";
-    public static List<ChunkPos> posList = new ArrayList<>();
+    public static final Map<ChunkPos, List<StructureStart>> chunkMap = new HashMap<>();
 
     public Main() {
         IEventBus bus = FMLJavaModLoadingContext.get().getModEventBus();
@@ -78,46 +76,14 @@ public class Main {
                 return;
             }
 
-            List<ChunkPos> posList1 = getUnloadedChunks(player);
-            List<BoundingBox> boxes = new ArrayList<>();
-
-            for (ChunkPos chunkPos : posList1) {
-                BlockPos pos = new BlockPos(chunkPos.x, (int) player.getY(), chunkPos.z);
-                SectionPos sectionpos = SectionPos.of(pos);
-
-                Map<ConfiguredStructureFeature<?, ?>, LongSet> r = level.getChunk(sectionpos.x(), sectionpos.z(), ChunkStatus.STRUCTURE_REFERENCES).getAllReferences();
-
-                for (Map.Entry<ConfiguredStructureFeature<?, ?>, LongSet> entry : r.entrySet()) {
-                    List<StructureStart> starts = startsForFeature(level, SectionPos.of(pos), entry.getKey());
-
-                    for (StructureStart start : starts) {
-                        if (start.getPieces().size() > 0) {
-                            if (!boxes.contains(start.getBoundingBox())) {
-                                boxes.add(start.getBoundingBox());
-
-                                sendStructureDebug(player, null, start.getBoundingBox(), Rotation.NONE);
-
-                                for (StructurePiece piece : start.getPieces()) {
-                                    if (piece instanceof VillageBuildablePiece dub) {
-                                        if (!boxes.contains(piece.getBoundingBox())) {
-                                            boxes.add(piece.getBoundingBox());
-                                            sendStructureDebug(player, dub.getStructureData(), piece.getBoundingBox(), piece.getRotation());
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+            sendUnloadedChunks(level, player);
         }
     }
 
-    private List<ChunkPos> getUnloadedChunks(Player player) {
-        List<ChunkPos> posList = new ArrayList<>();
-        int radius = (16 * 8);
-
+    private void sendUnloadedChunks(ServerLevel level, ServerPlayer player) {
         ChunkPos chunkPos = new ChunkPos(player.getOnPos());
+
+        int radius = (16 * 8);
 
         int X_MIN = chunkPos.getMiddleBlockX() - radius;
         int X_MAX = chunkPos.getMiddleBlockX() + radius;
@@ -127,14 +93,27 @@ public class Main {
 
         for (int x = X_MIN; x < X_MAX; x += 9) {
             for (int z = Z_MIN; z < Z_MAX; z += 9) {
-                if (!Main.posList.contains(chunkPos)) {
-                    Main.posList.add(chunkPos);
-                    posList.add(chunkPos);
-                }
-                chunkPos = new ChunkPos(x, z);
+                ChunkPos finalChunkPos = chunkPos;
+
+                chunkMap.computeIfAbsent(chunkPos, list -> {
+                    SectionPos sectionpos = SectionPos.of(finalChunkPos, 0);
+
+                    Map<ConfiguredStructureFeature<?, ?>, LongSet> r = level.getChunk(sectionpos.x(), sectionpos.z(), ChunkStatus.STRUCTURE_REFERENCES).getAllReferences();
+
+                    List<StructureStart> starts = new ArrayList<>();
+
+                    for (Map.Entry<ConfiguredStructureFeature<?, ?>, LongSet> entry : r.entrySet()) {
+                         starts.addAll(startsForFeature(level, sectionpos, entry.getKey()));
+                    }
+
+                    for (StructureStart start : starts) {
+                        sendStartDebug(player, start);
+                    }
+                    return new ArrayList<>();
+                });
+                chunkPos = new ChunkPos(new BlockPos(x, 0, z));
             }
         }
-        return posList;
     }
 
     public static List<StructureStart> startsForFeature(ServerLevel level, SectionPos sectionPos, ConfiguredStructureFeature<?, ?> feature) {
@@ -144,12 +123,20 @@ public class Main {
         return builder.build();
     }
 
-    private void sendStructureDebug(ServerPlayer player, @Nullable CompoundTag tag, BoundingBox box, Rotation rotation) {
-        System.out.println("Server - StructureData " + box);
+    private void sendStartDebug(ServerPlayer player, StructureStart start) {
+        StructureDebugPacket packet = new StructureDebugPacket(null, start.getBoundingBox(), Rotation.NONE);
+        Network.INSTANCE.sendTo(packet, player.connection.connection, NetworkDirection.PLAY_TO_CLIENT);
 
-        BlockPos min = new BlockPos(box.minX(), box.minY(), box.minZ());
-        BlockPos max = new BlockPos(box.maxX(), box.maxY(), box.maxZ());
+        for (StructurePiece piece : start.getPieces()) {
+            CompoundTag tag = null;
 
-        Network.INSTANCE.sendTo(new StructureDebugPacket(tag, min, max, rotation), player.connection.connection, NetworkDirection.PLAY_TO_CLIENT);
+            if (piece instanceof VillageBuildablePiece buildablePiece) {
+                tag = buildablePiece.getStructureData();
+            }
+
+            packet = new StructureDebugPacket(tag, piece.getBoundingBox(), piece.getRotation());
+
+            Network.INSTANCE.sendTo(packet, player.connection.connection, NetworkDirection.PLAY_TO_CLIENT);
+        }
     }
 }
