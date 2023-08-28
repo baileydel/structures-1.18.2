@@ -22,15 +22,13 @@ import java.util.function.Supplier;
 public class StructureDebugPacket {
     @Nullable
     private final CompoundTag tag;
-    private final BlockPos min;
-    private final BlockPos max;
+    private final BoundingBox pieceBox;
     private final Rotation rotation;
 
-    public StructureDebugPacket(@Nullable CompoundTag tag, BlockPos one, BlockPos two, Rotation rotation) {
+    public StructureDebugPacket(@Nullable CompoundTag tag, BoundingBox pieceBox, Rotation rotation) {
         this.tag = tag;
-        this.min = one;
-        this.max = two;
         this.rotation = rotation;
+        this.pieceBox = pieceBox;
 
         if (tag != null) {
             this.tag.putString("rotation", rotation.toString());
@@ -39,29 +37,42 @@ public class StructureDebugPacket {
 
     public StructureDebugPacket(FriendlyByteBuf buf) {
         tag = buf.readAnySizeNbt();
-        min = buf.readBlockPos();
-        max = buf.readBlockPos();
         rotation = getRotation(tag);
+        pieceBox = getBoundingBox(buf);
     }
 
     public void write(FriendlyByteBuf buf) {
         buf.writeNbt(tag);
-        buf.writeBlockPos(min);
-        buf.writeBlockPos(max);
+        writeBoundingBox(pieceBox, buf);
     }
 
     private Rotation getRotation(CompoundTag tag) {
-        String r = "";
+        String rot = "";
         if (tag != null) {
-            r = tag.getString("rotation");
+            rot = tag.getString("rotation");
         }
 
-        return switch (r) {
+        return switch (rot) {
             case "CLOCKWISE_90" -> Rotation.CLOCKWISE_90;
             case "CLOCKWISE_180" -> Rotation.CLOCKWISE_180;
             case "COUNTERCLOCKWISE_90" -> Rotation.COUNTERCLOCKWISE_90;
             default -> Rotation.NONE;
         };
+    }
+
+    private void writeBoundingBox(BoundingBox box, FriendlyByteBuf buf) {
+        BlockPos min = new BlockPos(box.minX(), box.minY(), box.minZ());
+        BlockPos max = new BlockPos(box.maxX(), box.maxY(), box.maxZ());
+
+        buf.writeBlockPos(min);
+        buf.writeBlockPos(max);
+    }
+
+    private BoundingBox getBoundingBox(FriendlyByteBuf buf) {
+        BlockPos min = buf.readBlockPos();
+        BlockPos max = buf.readBlockPos();
+
+        return BoundingBox.fromCorners(min, max);
     }
 
     /*
@@ -70,7 +81,7 @@ public class StructureDebugPacket {
     public static void handle(StructureDebugPacket msg, Supplier<NetworkEvent.Context> ctx) {
         ctx.get().enqueueWork(() ->
                 DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
-                    BuildablePiece piece = new BuildablePiece(msg.tag, BoundingBox.fromCorners(msg.min, msg.max), msg.rotation);
+                    BuildablePiece piece = new BuildablePiece(msg.tag, msg.pieceBox, msg.rotation);
 
                     if (!ClientEvents.pieces.contains(piece)) {
                         ClientEvents.pieces.add(piece);
