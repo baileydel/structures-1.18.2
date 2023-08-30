@@ -132,12 +132,12 @@ public class VillageBuildablePiece extends StructurePiece {
     //TODO Retrieve tag from saved data
     @Nullable
     public CompoundTag getStructureData() {
-        this.tag = new CompoundTag();
+        tag = new CompoundTag();
         String[] spl = element.toString().split("\\[");
         Optional<StructureTemplate> template =  structureManager.get(new ResourceLocation(spl[spl.length - 1].replace("]]", "")));
 
-        template.ifPresent(structureTemplate -> this.tag = structureTemplate.save(tag));
-        if (!this.tag.isEmpty()) {
+        template.ifPresent(structureTemplate -> tag = structureTemplate.save(tag));
+        if (!tag.isEmpty()) {
             CompoundTag tag = new CompoundTag();
 
             ListTag listTag1 = this.tag.getList("blocks", 10);
