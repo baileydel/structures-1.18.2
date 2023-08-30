@@ -134,6 +134,8 @@ public class Main {
                 tag = buildablePiece.getStructureData();
             }
 
+            System.out.println("Server - Sending new Structure - " + piece.getRotation());
+
             packet = new StructureDebugPacket(tag, piece.getBoundingBox(), piece.getRotation());
 
             Network.INSTANCE.sendTo(packet, player.connection.connection, NetworkDirection.PLAY_TO_CLIENT);

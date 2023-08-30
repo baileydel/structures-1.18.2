@@ -1,8 +1,10 @@
 package com.delke.custom_villages.network;
 
-import com.delke.custom_villages.Main;
 import net.minecraft.client.Minecraft;
-import net.minecraft.core.*;
+import net.minecraft.core.Holder;
+import net.minecraft.core.Registry;
+import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.SectionPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
@@ -27,9 +29,13 @@ import java.util.function.Supplier;
 
 import static com.delke.custom_villages.Main.MODID;
 
+/**
+ * @author Bailey Delker
+ * @created 06/20/2023 - 7:15 AM
+ * @project structures-1.18.2
+ */
 public class ForcePacket {
     public static final ChunkPos STATIC_START = new ChunkPos(0, 0);
-    private static boolean loaded = false;
 
     public ForcePacket() {}
 
@@ -38,12 +44,13 @@ public class ForcePacket {
     public void write(FriendlyByteBuf buf) {}
 
     /*
-        Only ever handle data on client (one way packet)
+        Only handle on server
      */
+    //TODO Refactor this
     public static void handle(ForcePacket msg, Supplier<NetworkEvent.Context> context) {
         NetworkEvent.Context ctx = context.get();
         ctx.enqueueWork(() -> {
-            System.out.println("server handling");
+            System.out.println("Server handling");
 
             if (ctx.getSender() != null) {
                 ServerLevel level = ctx.getSender().getLevel();
@@ -51,13 +58,11 @@ public class ForcePacket {
                 ChunkAccess chunkAccess = level.getChunk(STATIC_START.x, STATIC_START.z);
 
                 if (structureFeature != null) {
-
-                    Main.posList.remove(STATIC_START);
-
-                    long seed = -234892394;
                     StructureManager structureManager = level.getStructureManager();
                     StructureFeatureManager featureManager = level.structureFeatureManager();
                     RegistryAccess registryAccess = level.registryAccess();
+
+                    long seed = RandomSupport.seedUniquifier();
 
                     SectionPos sectionPos = SectionPos.of(STATIC_START, 0);
                     ChunkGenerator chunkGenerator = level.getChunkSource().getGenerator();
@@ -66,7 +71,7 @@ public class ForcePacket {
                     chunkAccess.setStartForFeature(structureFeature,start );
                     chunkAccess.addReferenceForFeature(structureFeature, ChunkPos.asLong(0, 0));
 
-                    WorldgenRandom worldgenrandom = new WorldgenRandom(new XoroshiroRandomSource(RandomSupport.seedUniquifier()));
+                    WorldgenRandom worldgenrandom = new WorldgenRandom(new XoroshiroRandomSource(seed));
 
                     if (start != StructureStart.INVALID_START) {
                         BoundingBox box = getWritableArea(chunkAccess);
@@ -75,7 +80,6 @@ public class ForcePacket {
                     }
                 }
             }
-
         });
         ctx.setPacketHandled(true);
     }
@@ -109,10 +113,7 @@ public class ForcePacket {
         try {
             int i = fetchReferences(featureManager, chunkAccess, sectionPos, configuredstructurefeature);
 
-            Predicate<Holder<Biome>> predicate = (w) -> {
-                System.out.println(w);
-                return true;
-            };
+            Predicate<Holder<Biome>> predicate = (w) -> true;
 
             StructureStart structurestart =  configuredstructurefeature.generate(access, generator, generator.getBiomeSource(), p_208020_, p_208021_, chunkPos, i, chunkAccess, predicate);
             if (structurestart.isValid()) {
@@ -130,5 +131,4 @@ public class ForcePacket {
         StructureStart structurestart = p_207977_.getStartForFeature(p_207979_, p_207980_, p_207978_);
         return structurestart != null ? structurestart.getReferences() : 0;
     }
-
 }

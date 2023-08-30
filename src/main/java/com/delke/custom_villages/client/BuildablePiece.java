@@ -158,13 +158,13 @@ public class BuildablePiece {
 
                     switch (rotation) {
                         case COUNTERCLOCKWISE_90:
-                            relativePos = new BlockPos(relativePos.getZ(), relativePos.getY(), -relativePos.getX());
+                            relativePos = new BlockPos(relativePos.getZ(), relativePos.getY(), relativePos.getX());
                             break;
                         case CLOCKWISE_180:
-                            relativePos = new BlockPos(-relativePos.getX(), relativePos.getY(), -relativePos.getZ());
+                            relativePos = new BlockPos(relativePos.getZ(), relativePos.getY(), -relativePos.getX());
                             break;
                         case CLOCKWISE_90:
-                            relativePos = new BlockPos(-relativePos.getZ(), relativePos.getY(), relativePos.getX());
+                            relativePos = new BlockPos(-relativePos.getX(), relativePos.getY(), -relativePos.getZ());
                             break;
 
                     }

@@ -1,6 +1,5 @@
 package com.delke.custom_villages.structures;
 
-import com.delke.custom_villages.Main;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.BlockPos;
@@ -12,7 +11,6 @@ import net.minecraft.world.level.levelgen.structure.PostPlacementProcessor;
 import net.minecraft.world.level.levelgen.structure.pieces.PieceGenerator;
 import net.minecraft.world.level.levelgen.structure.pieces.PieceGeneratorSupplier;
 import net.minecraft.world.level.levelgen.structure.pools.StructureTemplatePool;
-import org.apache.logging.log4j.Level;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Optional;
@@ -80,13 +78,11 @@ public class SkyStructures extends StructureFeature<JigsawConfiguration> {
         // Check if the spot is valid for our structure. This is just as another method for cleanness.
         // Returning an empty optional tells the game to skip this spot as it will not generate the structure.
         // Turns the chunk coordinates into actual coordinates we can use. (Gets center of that chunk)
-        BlockPos blockpos = context.chunkPos().getMiddleBlockPosition(0);
+        BlockPos blockpos = context.chunkPos().getMiddleBlockPosition(0).above(10);
 
         // Set's our spawning blockpos's y offset to be 60 blocks up.
         // Since we are going to have heightmap/terrain height spawning set to true further down, this will make it so we spawn 60 blocks above terrain.
         // If we wanted to spawn on ocean floor, we would set heightmap/terrain height spawning to false and the grab the y value of the terrain with OCEAN_FLOOR_WG heightmap.
-        blockpos = blockpos.above(60);
-
         Optional<PieceGenerator<JigsawConfiguration>> structurePiecesGenerator =
                 NewJigsawPlacement.addPieces(
                         context, // Used for JigsawPlacement to get all the proper behaviors done.
@@ -110,8 +106,7 @@ public class SkyStructures extends StructureFeature<JigsawConfiguration> {
         if (structurePiecesGenerator.isPresent()) {
             // I use to debug and quickly find out if the structure is spawning or not and where it is.
             // This is returning the coordinates of the center starting piece.
-            Main.LOGGER.log(Level.DEBUG, "Rundown House at {}", blockpos);
-            System.out.println(blockpos.getX() + " " + (blockpos.getY() + 60) + " " + blockpos.getZ());
+            System.out.println(blockpos.getX() + " " + blockpos.getY() + " " + blockpos.getZ());
         }
 
         // Return the pieces generator that is now set up so that the game runs it when it needs to create the layout of structure pieces.

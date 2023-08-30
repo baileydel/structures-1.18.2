@@ -15,6 +15,9 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.delke.custom_villages.Main.chunkMap;
+import static com.delke.custom_villages.network.ForcePacket.STATIC_START;
+
 /**
  * @author Bailey Delker
  * @created 07/30/2023 - 12:16 PM
@@ -37,6 +40,7 @@ public class ClientEvents {
 
         if (event.getKey() == 45) {
             loaded = false;
+            chunkMap.remove(STATIC_START);
             pieces.clear();
         }
     }
@@ -45,7 +49,6 @@ public class ClientEvents {
     public void RenderGui(RenderGameOverlayEvent event) {
         /*
             STOP-SHIP
-            Only render is close to the piece
             Do Block check
                 if block state is wrong on structure make it yellow
                 if structure contains incorrect block make it red
@@ -67,7 +70,6 @@ public class ClientEvents {
         Player player = mc.player;
 
         if (player != null && mc.level != null && event.getStage().equals(RenderLevelStageEvent.Stage.AFTER_CUTOUT_BLOCKS)) {
-
             for (BuildablePiece piece : pieces) {
                 BoundingBox box = piece.getBox();
 

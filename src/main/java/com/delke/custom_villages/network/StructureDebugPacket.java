@@ -37,7 +37,7 @@ public class StructureDebugPacket {
 
     public StructureDebugPacket(FriendlyByteBuf buf) {
         tag = buf.readAnySizeNbt();
-        rotation = getRotation(tag);
+        rotation = getRotation();
         pieceBox = getBoundingBox(buf);
     }
 
@@ -46,7 +46,7 @@ public class StructureDebugPacket {
         writeBoundingBox(pieceBox, buf);
     }
 
-    private Rotation getRotation(CompoundTag tag) {
+    private Rotation getRotation() {
         String rot = "";
         if (tag != null) {
             rot = tag.getString("rotation");
