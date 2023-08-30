@@ -18,6 +18,8 @@ import javax.annotation.Nullable;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static net.minecraft.world.level.block.Rotation.*;
+
 /**
  * @author Bailey Delker
  * @created 08/22/2023 - 11:56 AM
@@ -46,14 +48,17 @@ public class ModPalette {
             for (int j = 0; j < blocksTag.size(); ++j) {
                 CompoundTag compoundtag = blocksTag.getCompound(j);
                 ListTag listtag = compoundtag.getList("pos", 3);
+
                 blockpos = new BlockPos(listtag.getInt(0), listtag.getInt(1), listtag.getInt(2));
                 BlockState blockstate = structuretemplate$simplepalette.stateFor(compoundtag.getInt("state"));
 
                 if (blockstate != null) {
                     CompoundTag compoundtag1;
+
                     if (compoundtag.contains("nbt")) {
                         compoundtag1 = compoundtag.getCompound("nbt");
-                    } else {
+                    }
+                    else {
                         compoundtag1 = null;
                     }
 
@@ -61,6 +66,7 @@ public class ModPalette {
                     addToLists(structuretemplate$structureblockinfo, list2, list, list1);
                 }
             }
+
             blocks = buildInfoList(list2, list, list1);
 
             for (StructureTemplate.StructureBlockInfo info : blocks) {
@@ -81,9 +87,10 @@ public class ModPalette {
         return this.cache;
     }
 
-    public List<StructureTemplate.StructureBlockInfo> blocks(Block p_74654_) {
-        return this.cache.computeIfAbsent(p_74654_, (p_74659_) -> this.blocks.stream().filter((p_163818_) -> p_163818_.state.is(p_74659_)).collect(Collectors.toList()));
+    public List<StructureTemplate.StructureBlockInfo> blocks(Block block) {
+        return this.cache.computeIfAbsent(block, (cur) -> this.blocks.stream().filter((p_163818_) -> p_163818_.state.is(cur)).collect(Collectors.toList()));
     }
+
     private static List<StructureTemplate.StructureBlockInfo> buildInfoList(List<StructureTemplate.StructureBlockInfo> p_74615_, List<StructureTemplate.StructureBlockInfo> p_74616_, List<StructureTemplate.StructureBlockInfo> p_74617_) {
         Comparator<StructureTemplate.StructureBlockInfo> comparator = Comparator.<StructureTemplate.StructureBlockInfo>comparingInt((p_74641_) -> p_74641_.pos.getY()).thenComparingInt((p_74637_) -> p_74637_.pos.getX()).thenComparingInt((p_74572_) -> p_74572_.pos.getZ());
         p_74615_.sort(comparator);
@@ -135,5 +142,4 @@ public class ModPalette {
             this.ids.addMapping(p_74672_, p_74673_);
         }
     }
-
 }
