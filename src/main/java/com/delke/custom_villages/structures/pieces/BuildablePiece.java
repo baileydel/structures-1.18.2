@@ -1,5 +1,6 @@
-package com.delke.custom_villages.structures;
+package com.delke.custom_villages.structures.pieces;
 
+import com.delke.custom_villages.structures.StructureRegistry;
 import com.google.common.collect.Lists;
 import com.mojang.logging.LogUtils;
 import com.mojang.serialization.Dynamic;
@@ -34,7 +35,7 @@ import java.util.Random;
 /*
    This is only used for village structures,
  */
-public class VillageBuildablePiece extends StructurePiece {
+public class BuildablePiece extends StructurePiece {
     private static final Logger LOGGER = LogUtils.getLogger();
     protected final StructurePoolElement element;
     protected BlockPos position;
@@ -44,8 +45,8 @@ public class VillageBuildablePiece extends StructurePiece {
     private final StructureManager structureManager;
     private CompoundTag tag;
 
-    public VillageBuildablePiece(StructureManager p_209910_, StructurePoolElement p_209911_, BlockPos p_209912_, int p_209913_, Rotation p_209914_, BoundingBox p_209915_) {
-        super(STStructures.VILLAGE_BUILDABLE_PIECE.get(), 0, p_209915_);
+    public BuildablePiece(StructureManager p_209910_, StructurePoolElement p_209911_, BlockPos p_209912_, int p_209913_, Rotation p_209914_, BoundingBox p_209915_) {
+        super(StructureRegistry.VILLAGE_BUILDABLE_PIECE.get(), 0, p_209915_);
         this.structureManager = p_209910_;
         this.element = p_209911_;
         this.position = p_209912_;
@@ -53,8 +54,8 @@ public class VillageBuildablePiece extends StructurePiece {
         this.rotation = p_209914_;
     }
 
-    public VillageBuildablePiece(StructurePieceSerializationContext p_192406_, CompoundTag p_192407_) {
-        super(STStructures.VILLAGE_BUILDABLE_PIECE.get(), p_192407_);
+    public BuildablePiece(StructurePieceSerializationContext p_192406_, CompoundTag p_192407_) {
+        super(StructureRegistry.VILLAGE_BUILDABLE_PIECE.get(), p_192407_);
         this.structureManager = p_192406_.structureManager();
         this.position = new BlockPos(p_192407_.getInt("PosX"), p_192407_.getInt("PosY"), p_192407_.getInt("PosZ"));
         this.groundLevelDelta = p_192407_.getInt("ground_level_delta");
@@ -105,10 +106,6 @@ public class VillageBuildablePiece extends StructurePiece {
         return this.rotation;
     }
 
-    public String toString() {
-        return String.format("<%s | %s | %s | %s>", this.getClass().getSimpleName(), this.position, this.rotation, this.element);
-    }
-
     public StructurePoolElement getElement() {
         return this.element;
     }
@@ -137,6 +134,7 @@ public class VillageBuildablePiece extends StructurePiece {
         Optional<StructureTemplate> template =  structureManager.get(new ResourceLocation(spl[spl.length - 1].replace("]]", "")));
 
         template.ifPresent(structureTemplate -> tag = structureTemplate.save(tag));
+
         if (!tag.isEmpty()) {
             CompoundTag tag = new CompoundTag();
 
@@ -151,5 +149,9 @@ public class VillageBuildablePiece extends StructurePiece {
             return tag;
         }
         return null;
+    }
+
+    public String toString() {
+        return String.format("<%s | %s | %s | %s>", this.getClass().getSimpleName(), this.position, this.rotation, this.element);
     }
 }
