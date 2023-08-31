@@ -1,6 +1,7 @@
 package com.delke.custom_villages.structures;
 
 import com.delke.custom_villages.Main;
+import com.delke.custom_villages.structures.pieces.BuildablePiece;
 import net.minecraft.core.Registry;
 import net.minecraft.world.level.levelgen.feature.StructureFeature;
 import net.minecraft.world.level.levelgen.feature.configurations.JigsawConfiguration;
@@ -9,7 +10,7 @@ import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
 
-public class STStructures {
+public class StructureRegistry {
 
     /**
      * We are using the Deferred Registry system to register our structure as this is the preferred way on Forge.
@@ -31,5 +32,5 @@ public class STStructures {
     // As RecipeType is an interface, an anonymous class will be created for registering
     // Vanilla RecipeTypes override #toString for debugging purposes, so it is omitted in this example
     // Assume some recipe ExampleRecipe
-    public static final RegistryObject<StructurePieceType> VILLAGE_BUILDABLE_PIECE = REGISTER.register("vbp", () -> VillageBuildablePiece::new);
+    public static final RegistryObject<StructurePieceType> VILLAGE_BUILDABLE_PIECE = REGISTER.register("vbp", () -> BuildablePiece::new);
 }
