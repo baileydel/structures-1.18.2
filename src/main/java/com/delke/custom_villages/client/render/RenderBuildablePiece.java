@@ -1,6 +1,6 @@
-package com.delke.custom_villages.client;
+package com.delke.custom_villages.client.render;
 
-import com.delke.custom_villages.client.render.RenderingUtil;
+import com.delke.custom_villages.client.ModPalette;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.Tesselator;
@@ -15,7 +15,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
@@ -36,7 +35,7 @@ import java.util.Map;
  * @project structures-1.18.2
  */
 @OnlyIn(Dist.CLIENT)
-public class BuildablePiece {
+public class RenderBuildablePiece {
     private final BoundingBox box;
 
     @Nullable
@@ -54,7 +53,7 @@ public class BuildablePiece {
      */
     private final Map<Block, List<StructureTemplate.StructureBlockInfo>> remaining = new HashMap<>();
 
-    public BuildablePiece(CompoundTag tag, BoundingBox box, Rotation rotation) {
+    public RenderBuildablePiece(CompoundTag tag, BoundingBox box, Rotation rotation) {
         this.box = box;
         this.rotation = rotation;
 
@@ -161,12 +160,11 @@ public class BuildablePiece {
                             relativePos = new BlockPos(relativePos.getZ(), relativePos.getY(), relativePos.getX());
                             break;
                         case CLOCKWISE_180:
-                            relativePos = new BlockPos(relativePos.getZ(), relativePos.getY(), -relativePos.getX());
+                            relativePos = new BlockPos(relativePos.getX(), relativePos.getY(), -relativePos.getZ() + box.getZSpan() - 1);
                             break;
                         case CLOCKWISE_90:
-                            relativePos = new BlockPos(-relativePos.getX(), relativePos.getY(), -relativePos.getZ());
+                            relativePos = new BlockPos(-relativePos.getZ() + box.getXSpan() - 1, relativePos.getY(), relativePos.getX());
                             break;
-
                     }
 
                     // Translate to world position
@@ -268,7 +266,7 @@ public class BuildablePiece {
 
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof BuildablePiece piece) {
+        if (obj instanceof RenderBuildablePiece piece) {
             return box.equals(piece.box);
         }
         return false;
