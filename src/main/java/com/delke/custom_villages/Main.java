@@ -3,8 +3,8 @@ package com.delke.custom_villages;
 import com.delke.custom_villages.client.ClientEvents;
 import com.delke.custom_villages.network.Network;
 import com.delke.custom_villages.network.StructureDebugPacket;
-import com.delke.custom_villages.structures.STStructures;
-import com.delke.custom_villages.structures.VillageBuildablePiece;
+import com.delke.custom_villages.structures.StructureRegistry;
+import com.delke.custom_villages.structures.pieces.BuildablePiece;
 import com.google.common.collect.ImmutableList;
 import it.unimi.dsi.fastutil.longs.LongSet;
 import net.minecraft.core.BlockPos;
@@ -29,7 +29,6 @@ import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.network.NetworkDirection;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -41,7 +40,6 @@ import java.util.Map;
 @Mod(Main.MODID)
 public class Main {
     public static final String MODID = "structure_tutorial";
-    public static final Map<ChunkPos, List<StructureStart>> chunkMap = new HashMap<>();
 
     public Main() {
         IEventBus bus = FMLJavaModLoadingContext.get().getModEventBus();
@@ -49,8 +47,8 @@ public class Main {
         bus.addListener(this::CommonSetup);
         bus.addListener(this::ClientSetup);
 
-        STStructures.DEFERRED_REGISTRY_STRUCTURE.register(bus);
-        STStructures.REGISTER.register(bus);
+        StructureRegistry.DEFERRED_REGISTRY_STRUCTURE.register(bus);
+        StructureRegistry.REGISTER.register(bus);
 
         MinecraftForge.EVENT_BUS.register(this);
     }
@@ -95,7 +93,7 @@ public class Main {
             for (int z = Z_MIN; z < Z_MAX; z += 9) {
                 ChunkPos finalChunkPos = chunkPos;
 
-                chunkMap.computeIfAbsent(chunkPos, list -> {
+                ModStructureManager.startMap.computeIfAbsent(chunkPos, list -> {
                     SectionPos sectionpos = SectionPos.of(finalChunkPos, 0);
 
                     Map<ConfiguredStructureFeature<?, ?>, LongSet> r = level.getChunk(sectionpos.x(), sectionpos.z(), ChunkStatus.STRUCTURE_REFERENCES).getAllReferences();
@@ -109,7 +107,8 @@ public class Main {
                     for (StructureStart start : starts) {
                         sendStartDebug(player, start);
                     }
-                    return new ArrayList<>();
+
+                    return starts;
                 });
                 chunkPos = new ChunkPos(new BlockPos(x, 0, z));
             }
@@ -130,7 +129,7 @@ public class Main {
         for (StructurePiece piece : start.getPieces()) {
             CompoundTag tag = null;
 
-            if (piece instanceof VillageBuildablePiece buildablePiece) {
+            if (piece instanceof BuildablePiece buildablePiece) {
                 tag = buildablePiece.getStructureData();
             }
 
