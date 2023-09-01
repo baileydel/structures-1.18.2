@@ -1,9 +1,14 @@
 package com.delke.custom_villages.client;
 
+import com.delke.custom_villages.ModStructureManager;
+import com.delke.custom_villages.client.render.RenderBuildablePiece;
+import com.delke.custom_villages.network.ClearPacket;
 import com.delke.custom_villages.network.ForcePacket;
 import com.delke.custom_villages.network.Network;
 import net.minecraft.client.Minecraft;
+import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
@@ -15,7 +20,6 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.delke.custom_villages.Main.chunkMap;
 import static com.delke.custom_villages.network.ForcePacket.STATIC_START;
 
 /**
@@ -25,7 +29,7 @@ import static com.delke.custom_villages.network.ForcePacket.STATIC_START;
  */
 @OnlyIn(Dist.CLIENT)
 public class ClientEvents {
-    public static final List<BuildablePiece> pieces = new ArrayList<>();
+    public static final List<RenderBuildablePiece> pieces = new ArrayList<>();
     private boolean loaded = false;
 
     @SubscribeEvent
@@ -40,8 +44,18 @@ public class ClientEvents {
 
         if (event.getKey() == 45) {
             loaded = false;
-            chunkMap.remove(STATIC_START);
+            ModStructureManager.startMap.remove(STATIC_START);
             pieces.clear();
+        }
+
+        if (event.getKey() == 90) {
+            if (ModStructureManager.hasPiece(STATIC_START, ForcePacket.makeStructure(), "structure_tutorial:road")) {
+                System.out.println("dub");
+            }
+        }
+
+        if (event.getKey() == 82) {
+            Network.INSTANCE.sendToServer(new ClearPacket());
         }
     }
 
@@ -54,12 +68,11 @@ public class ClientEvents {
                 if structure contains incorrect block make it red
 
            Start development of actual structures, not one piece.
-                Locate a piece in a structure (Start a structure off with 2 pieces)
                 Add pieces to a structure after generation
                 Remove pieces of a structure after generation
          */
 
-        for (BuildablePiece piece : pieces) {
+        for (RenderBuildablePiece piece : pieces) {
             piece.renderGui(event.getMatrixStack());
         }
     }
@@ -70,7 +83,7 @@ public class ClientEvents {
         Player player = mc.player;
 
         if (player != null && mc.level != null && event.getStage().equals(RenderLevelStageEvent.Stage.AFTER_CUTOUT_BLOCKS)) {
-            for (BuildablePiece piece : pieces) {
+            for (RenderBuildablePiece piece : pieces) {
                 BoundingBox box = piece.getBox();
 
                 if (box.getCenter().closerThan(player.getOnPos(), mc.options.renderDistance * 16)) {
