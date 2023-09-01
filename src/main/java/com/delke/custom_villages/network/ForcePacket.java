@@ -23,6 +23,7 @@ import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.StructureStart;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureManager;
 import net.minecraftforge.network.NetworkEvent;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -36,6 +37,12 @@ import static com.delke.custom_villages.Main.MODID;
  */
 public class ForcePacket {
     public static final ChunkPos STATIC_START = new ChunkPos(0, 0);
+    public static long SEED = RandomSupport.seedUniquifier();
+    public static RegistryAccess REGISTRY_ACCESS;
+    public static ConfiguredStructureFeature<?, ?> STRUCTURE_FEATURE;
+    public static StructureManager STRUCTURE_MANAGER;
+    public static ChunkGenerator CHUNK_GENERATOR;
+    public static ChunkAccess CHUNK;
 
     public ForcePacket() {}
 
@@ -50,33 +57,31 @@ public class ForcePacket {
     public static void handle(ForcePacket msg, Supplier<NetworkEvent.Context> context) {
         NetworkEvent.Context ctx = context.get();
         ctx.enqueueWork(() -> {
-            System.out.println("Server handling");
-
             if (ctx.getSender() != null) {
                 ServerLevel level = ctx.getSender().getLevel();
-                ConfiguredStructureFeature<?, ?> structureFeature = makeStructure();
-                ChunkAccess chunkAccess = level.getChunk(STATIC_START.x, STATIC_START.z);
+                STRUCTURE_FEATURE = makeStructure();
+                CHUNK = level.getChunk(STATIC_START.x, STATIC_START.z);
 
-                if (structureFeature != null) {
-                    StructureManager structureManager = level.getStructureManager();
+                if (STRUCTURE_FEATURE != null) {
+                    STRUCTURE_MANAGER = level.getStructureManager();
                     StructureFeatureManager featureManager = level.structureFeatureManager();
-                    RegistryAccess registryAccess = level.registryAccess();
-
-                    long seed = RandomSupport.seedUniquifier();
+                    REGISTRY_ACCESS = featureManager.registryAccess();
 
                     SectionPos sectionPos = SectionPos.of(STATIC_START, 0);
-                    ChunkGenerator chunkGenerator = level.getChunkSource().getGenerator();
-                    StructureStart start = tryGenerateStructure(structureFeature, chunkGenerator, featureManager, registryAccess, structureManager, seed, chunkAccess, STATIC_START, sectionPos);
+                    CHUNK_GENERATOR = level.getChunkSource().getGenerator();
+                    StructureStart start = tryGenerateStructure(STRUCTURE_FEATURE, CHUNK_GENERATOR, featureManager, REGISTRY_ACCESS, STRUCTURE_MANAGER, SEED, CHUNK, STATIC_START, sectionPos);
 
-                    chunkAccess.setStartForFeature(structureFeature,start );
-                    chunkAccess.addReferenceForFeature(structureFeature, ChunkPos.asLong(0, 0));
+                    CHUNK.setStartForFeature(STRUCTURE_FEATURE,start );
+                    CHUNK.addReferenceForFeature(STRUCTURE_FEATURE, ChunkPos.asLong(0, 0));
 
-                    WorldgenRandom worldgenrandom = new WorldgenRandom(new XoroshiroRandomSource(seed));
+                    WorldgenRandom worldgenrandom = new WorldgenRandom(new XoroshiroRandomSource(SEED));
 
                     if (start != StructureStart.INVALID_START) {
-                        BoundingBox box = getWritableArea(chunkAccess);
+                        BoundingBox box = getWritableArea(CHUNK);
 
-                        featureManager.startsForFeature(sectionPos, structureFeature).forEach((p_211647_) -> p_211647_.placeInChunk(level, featureManager, chunkGenerator, worldgenrandom, box, STATIC_START));
+                        featureManager.startsForFeature(sectionPos, STRUCTURE_FEATURE).forEach(
+                                (structureStart) -> structureStart.placeInChunk(level, featureManager, CHUNK_GENERATOR, worldgenrandom, box, STATIC_START)
+                        );
                     }
                 }
             }
@@ -94,7 +99,7 @@ public class ForcePacket {
         return new BoundingBox(i, k, j, i + 15, l, j + 15);
     }
 
-    private static ConfiguredStructureFeature<?, ?> makeStructure() {
+    public static ConfiguredStructureFeature<?, ?> makeStructure() {
         Minecraft mc = Minecraft.getInstance();
 
         if (mc.level != null && mc.getSingleplayerServer() != null) {
