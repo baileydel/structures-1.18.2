@@ -45,25 +45,25 @@ public class BuildablePiece extends StructurePiece {
     private final StructureManager structureManager;
     private CompoundTag tag;
 
-    public BuildablePiece(StructureManager p_209910_, StructurePoolElement p_209911_, BlockPos p_209912_, int p_209913_, Rotation p_209914_, BoundingBox p_209915_) {
-        super(StructureRegistry.VILLAGE_BUILDABLE_PIECE.get(), 0, p_209915_);
-        this.structureManager = p_209910_;
-        this.element = p_209911_;
-        this.position = p_209912_;
-        this.groundLevelDelta = p_209913_;
-        this.rotation = p_209914_;
+    public BuildablePiece(StructureManager structureManager, StructurePoolElement element, BlockPos pos, int groundLevelDelta, Rotation rotation, BoundingBox boundingBox) {
+        super(StructureRegistry.VILLAGE_BUILDABLE_PIECE.get(), 0, boundingBox);
+        this.structureManager = structureManager;
+        this.element = element;
+        this.position = pos;
+        this.groundLevelDelta = groundLevelDelta;
+        this.rotation = rotation;
     }
 
-    public BuildablePiece(StructurePieceSerializationContext p_192406_, CompoundTag p_192407_) {
-        super(StructureRegistry.VILLAGE_BUILDABLE_PIECE.get(), p_192407_);
-        this.structureManager = p_192406_.structureManager();
-        this.position = new BlockPos(p_192407_.getInt("PosX"), p_192407_.getInt("PosY"), p_192407_.getInt("PosZ"));
-        this.groundLevelDelta = p_192407_.getInt("ground_level_delta");
-        DynamicOps<Tag> dynamicops = RegistryOps.create(NbtOps.INSTANCE, p_192406_.registryAccess());
-        this.element = StructurePoolElement.CODEC.parse(dynamicops, p_192407_.getCompound("pool_element")).resultOrPartial(LOGGER::error).orElseThrow(() -> new IllegalStateException("Invalid pool element found"));
-        this.rotation = Rotation.valueOf(p_192407_.getString("rotation"));
+    public BuildablePiece(StructurePieceSerializationContext context, CompoundTag tag) {
+        super(StructureRegistry.VILLAGE_BUILDABLE_PIECE.get(), tag);
+        this.structureManager = context.structureManager();
+        this.position = new BlockPos(tag.getInt("PosX"), tag.getInt("PosY"), tag.getInt("PosZ"));
+        this.groundLevelDelta = tag.getInt("ground_level_delta");
+        DynamicOps<Tag> dynamicops = RegistryOps.create(NbtOps.INSTANCE, context.registryAccess());
+        this.element = StructurePoolElement.CODEC.parse(dynamicops, tag.getCompound("pool_element")).resultOrPartial(LOGGER::error).orElseThrow(() -> new IllegalStateException("Invalid pool element found"));
+        this.rotation = Rotation.valueOf(tag.getString("rotation"));
         this.boundingBox = this.element.getBoundingBox(this.structureManager, this.position, this.rotation);
-        ListTag listtag = p_192407_.getList("junctions", 10);
+        ListTag listtag = tag.getList("junctions", 10);
         this.junctions.clear();
         listtag.forEach((p_204943_) -> this.junctions.add(JigsawJunction.deserialize(new Dynamic<>(dynamicops, p_204943_))));
     }
@@ -94,7 +94,7 @@ public class BuildablePiece extends StructurePiece {
     }
 
     public void place(@NotNull WorldGenLevel genLevel, @NotNull StructureFeatureManager featureManager, @NotNull ChunkGenerator chunkGenerator, @NotNull Random random, @NotNull BoundingBox boundingBox, @NotNull BlockPos blockPos, boolean idk) {
-        this.element.place(this.structureManager, genLevel, featureManager, chunkGenerator, this.position, blockPos , this.rotation, boundingBox, random, idk);
+        //this.element.place(this.structureManager, genLevel, featureManager, chunkGenerator, this.position, blockPos , this.rotation, boundingBox, random, idk);
     }
 
     public void move(int p_72616_, int p_72617_, int p_72618_) {
