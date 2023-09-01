@@ -1,6 +1,6 @@
 package com.delke.custom_villages.network;
 
-import com.delke.custom_villages.client.BuildablePiece;
+import com.delke.custom_villages.client.render.RenderBuildablePiece;
 import com.delke.custom_villages.client.ClientEvents;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -81,7 +81,7 @@ public class StructureDebugPacket {
     public static void handle(StructureDebugPacket msg, Supplier<NetworkEvent.Context> ctx) {
         ctx.get().enqueueWork(() ->
                 DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
-                    BuildablePiece piece = new BuildablePiece(msg.tag, msg.pieceBox, msg.rotation);
+                    RenderBuildablePiece piece = new RenderBuildablePiece(msg.tag, msg.pieceBox, msg.rotation);
 
                     if (!ClientEvents.pieces.contains(piece)) {
                         ClientEvents.pieces.add(piece);
