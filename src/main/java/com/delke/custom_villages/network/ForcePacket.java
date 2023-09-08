@@ -23,8 +23,8 @@ import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.StructureStart;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureManager;
 import net.minecraftforge.network.NetworkEvent;
-import org.jetbrains.annotations.Nullable;
 
+import java.util.Map;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
@@ -35,7 +35,7 @@ import static com.delke.custom_villages.Main.MODID;
  * @created 06/20/2023 - 7:15 AM
  * @project structures-1.18.2
  */
-public class ForcePacket {
+public class  ForcePacket {
     public static final ChunkPos STATIC_START = new ChunkPos(0, 0);
     public static long SEED = RandomSupport.seedUniquifier();
     public static RegistryAccess REGISTRY_ACCESS;
@@ -44,7 +44,9 @@ public class ForcePacket {
     public static ChunkGenerator CHUNK_GENERATOR;
     public static ChunkAccess CHUNK;
 
-    public ForcePacket() {}
+    public ForcePacket() {
+        System.out.println("Client - Trying to send ForcePacket");
+    }
 
     public ForcePacket(FriendlyByteBuf buf) {}
 
@@ -60,9 +62,12 @@ public class ForcePacket {
             if (ctx.getSender() != null) {
                 ServerLevel level = ctx.getSender().getLevel();
                 STRUCTURE_FEATURE = makeStructure();
-                CHUNK = level.getChunk(STATIC_START.x, STATIC_START.z);
+
 
                 if (STRUCTURE_FEATURE != null) {
+                    CHUNK = level.getChunk(STATIC_START.x, STATIC_START.z);
+                    CHUNK.setAllStarts(Map.of());
+
                     STRUCTURE_MANAGER = level.getStructureManager();
                     StructureFeatureManager featureManager = level.structureFeatureManager();
                     REGISTRY_ACCESS = featureManager.registryAccess();
@@ -71,7 +76,7 @@ public class ForcePacket {
                     CHUNK_GENERATOR = level.getChunkSource().getGenerator();
                     StructureStart start = tryGenerateStructure(STRUCTURE_FEATURE, CHUNK_GENERATOR, featureManager, REGISTRY_ACCESS, STRUCTURE_MANAGER, SEED, CHUNK, STATIC_START, sectionPos);
 
-                    CHUNK.setStartForFeature(STRUCTURE_FEATURE,start );
+                    CHUNK.setStartForFeature(STRUCTURE_FEATURE, start);
                     CHUNK.addReferenceForFeature(STRUCTURE_FEATURE, ChunkPos.asLong(0, 0));
 
                     WorldgenRandom worldgenrandom = new WorldgenRandom(new XoroshiroRandomSource(SEED));
@@ -99,7 +104,7 @@ public class ForcePacket {
         return new BoundingBox(i, k, j, i + 15, l, j + 15);
     }
 
-    public static ConfiguredStructureFeature<?, ?> makeStructure() {
+    private static ConfiguredStructureFeature<?, ?> makeStructure() {
         Minecraft mc = Minecraft.getInstance();
 
         if (mc.level != null && mc.getSingleplayerServer() != null) {

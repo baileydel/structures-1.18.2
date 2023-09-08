@@ -1,5 +1,7 @@
 package com.delke.custom_villages.structures;
 
+import com.delke.custom_villages.structures.pieces.BuildablePiece;
+import com.delke.custom_villages.structures.pieces.NewJigsawPlacement;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.BlockPos;
@@ -16,9 +18,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Optional;
 
 public class SkyStructures extends StructureFeature<JigsawConfiguration> {
-
-    // A custom codec that changes the size limit for our code_structure_sky_fan.json's config to not be capped at 7.
-    // With this, we can have a structure with a size limit up to 30 if we want to have extremely long branches of pieces in the structure.
     public static final Codec<JigsawConfiguration> CODEC = RecordCodecBuilder.create((codec) ->
         codec.group(
                 StructureTemplatePool.CODEC.fieldOf("start_pool").forGetter(JigsawConfiguration::startPool),
@@ -75,10 +74,7 @@ public class SkyStructures extends StructureFeature<JigsawConfiguration> {
 
 
     public static Optional<PieceGenerator<JigsawConfiguration>> createPiecesGenerator(PieceGeneratorSupplier.Context<JigsawConfiguration> context) {
-        // Check if the spot is valid for our structure. This is just as another method for cleanness.
-        // Returning an empty optional tells the game to skip this spot as it will not generate the structure.
-        // Turns the chunk coordinates into actual coordinates we can use. (Gets center of that chunk)
-        BlockPos blockpos = context.chunkPos().getMiddleBlockPosition(0).above(10);
+        BlockPos blockpos = context.chunkPos().getMiddleBlockPosition(0).above(5);
 
         // Set's our spawning blockpos's y offset to be 60 blocks up.
         // Since we are going to have heightmap/terrain height spawning set to true further down, this will make it so we spawn 60 blocks above terrain.
@@ -86,23 +82,13 @@ public class SkyStructures extends StructureFeature<JigsawConfiguration> {
         Optional<PieceGenerator<JigsawConfiguration>> structurePiecesGenerator =
                 NewJigsawPlacement.addPieces(
                         context, // Used for JigsawPlacement to get all the proper behaviors done.
-                        VillageBuildablePiece::new, // Needed in order to create a list of jigsaw pieces when making the structure's layout.
+                        BuildablePiece::new, //,en making the structure's // Needed in order to create a list of jigsaw pieces wh layout.
                         blockpos, // Position of the structure. Y value is ignored if last parameter is set to true.
                         false,  // Special boundary adjustments for villages. It's... hard to explain. Keep this false and make your pieces not be partially intersecting.
                         // Either not intersecting or fully contained will make children pieces spawn just fine. It's easier that way.
                         true // Adds the terrain height's y value to the passed in blockpos's y value. (This uses WORLD_SURFACE_WG heightmap which stops at top water too)
-                        // Here, blockpos's y value is 60 which means the structure spawn 60 blocks above terrain height.
-                        // Set this to false for structure to be place only at the passed in blockpos's Y value instead.
-                        // Definitely keep this false when placing structures in the nether as otherwise, heightmap placing will put the structure on the Bedrock roof.
                 );
 
-        /*
-         * Note, you are always free to make your own JigsawPlacement class and implementation of how the structure
-         * should generate. It is tricky but extremely powerful if you are doing something that vanilla's jigsaw system cannot do.
-         * Such as for example, forcing 3 pieces to always spawn every time, limiting how often a piece spawns, or remove the intersection limitation of pieces.
-         * An example of a custom JigsawPlacement.addPieces in action can be found here (warning, it is using Mojmap mappings):
-         * https://github.com/TelepathicGrunt/RepurposedStructures/blob/1.18.2/src/main/java/com/telepathicgrunt/repurposedstructures/world/structures/pieces/PieceLimitedJigsawManager.java
-         */
         if (structurePiecesGenerator.isPresent()) {
             // I use to debug and quickly find out if the structure is spawning or not and where it is.
             // This is returning the coordinates of the center starting piece.

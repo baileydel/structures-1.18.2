@@ -126,7 +126,9 @@ public class Main {
         StructureDebugPacket packet = new StructureDebugPacket(null, start.getBoundingBox(), Rotation.NONE);
         Network.INSTANCE.sendTo(packet, player.connection.connection, NetworkDirection.PLAY_TO_CLIENT);
 
-        for (StructurePiece piece : start.getPieces()) {
+        List<StructurePiece> pieces = start.getPieces();
+
+        for (StructurePiece piece : pieces) {
             CompoundTag tag = null;
 
             if (piece instanceof BuildablePiece buildablePiece) {

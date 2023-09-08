@@ -1,13 +1,10 @@
 package com.delke.custom_villages.network;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.network.NetworkEvent;
-import org.checkerframework.checker.units.qual.C;
 
 import java.util.function.Supplier;
 
@@ -32,6 +29,7 @@ public class ClearPacket {
         NetworkEvent.Context ctx = context.get();
         ctx.enqueueWork(() -> {
             if (ctx.getSender() != null) {
+
                 ServerLevel level = (ServerLevel) ctx.getSender().level;
 
                 for (int x = 50; x > -50; x--) {

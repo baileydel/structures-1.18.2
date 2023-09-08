@@ -39,24 +39,24 @@ public class ClientEvents {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player != null && mc.level != null) {
             switch (event.getKey()) {
-                case 61: {
+                case 61: { // + Generate Structure
                     if (!loaded) {
                         Network.INSTANCE.sendToServer(new ForcePacket());
                         tick = 0;
                         break;
                     }
                 }
-                case 90:
+                case 90: // Idk
                     System.out.println("Has Piece: ");
                     if (ModStructureManager.hasPiece(STATIC_START, ForcePacket.STRUCTURE_FEATURE, "structure_tutorial:road")) {
                         System.out.println("dub");
                     }
                     break;
-                case 82:
+                case 82: // R Clear Blocks, and reset structure..
                     Network.INSTANCE.sendToServer(new ClearPacket());
                     tick = 0;
                     break;
-                case 71:
+                case 71: // G Delete a Piece
                     Network.INSTANCE.sendToServer(new PieceTestPacket());
                     tick = 0;
                     break;
