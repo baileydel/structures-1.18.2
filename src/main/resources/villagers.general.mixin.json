@@ -3,14 +3,12 @@
   "package": "com.delke.custom_villages.mixin",
   "compatibilityLevel": "JAVA_17",
   "mixins": [
-
+    "StructureStartAccessor",
+    "StructureStartMixin"
   ],
   "injectors": {
     "defaultRequire": 1
   },
   "refmap": "villagers.general.mixin-refmap.json",
-  "minVersion": "0.8",
-  "client": [
-
-  ]
+  "minVersion": "0.8"
 }
