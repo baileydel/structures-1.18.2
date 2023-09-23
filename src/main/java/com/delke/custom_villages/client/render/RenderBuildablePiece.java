@@ -1,14 +1,10 @@
 package com.delke.custom_villages.client.render;
 
 import com.delke.custom_villages.client.ModPalette;
-import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.datafixers.util.Pair;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.entity.ItemRenderer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.player.Player;
@@ -24,8 +20,8 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -38,20 +34,25 @@ import java.util.Map;
 public class RenderBuildablePiece {
     private final BoundingBox box;
 
+    //TODO Palette can never be empty, only line this for now because we have to send the structures overall bounding box
     @Nullable
     private final ModPalette palette;
-
     private final Rotation rotation;
 
     /*
-        STOP-SHIP
-        When a block is changed inside a bounding box, we should update it.
-        Either use event bus's and make remaining compatible with multiple pieces / structures at the same time
-        or constantly check in rendering
+    For Gui Rendering.
+    */
+    private final Map<Block, Integer> placed = new HashMap<>();
 
-        either way constantly checking in rendering will always be slower
+    /*
+    Original copy of all rotated blocks
      */
-    private final Map<Block, List<StructureTemplate.StructureBlockInfo>> remaining = new HashMap<>();
+    private final HashSet<Pair<BlockPos, BlockState>> relativeToWorld = new HashSet<>();
+
+    /*
+    This is used to render relative to the world.
+     */
+    private final HashSet<Pair<BlockPos, BlockState>> blocksToRender = new HashSet<>();
 
     public RenderBuildablePiece(CompoundTag tag, BoundingBox box, Rotation rotation) {
         this.box = box;
@@ -59,6 +60,7 @@ public class RenderBuildablePiece {
 
         if (tag != null) {
             this.palette = new ModPalette(tag);
+            rotate();
         }
         else {
             this.palette = null;
@@ -69,73 +71,20 @@ public class RenderBuildablePiece {
         Minecraft mc = Minecraft.getInstance();
         Player player = mc.player;
 
-        if (player != null && box.getCenter().closerThan(player.getOnPos(), mc.options.renderDistance * 16)) {
+        if (player != null && box.getCenter().closerThan(player.getOnPos(), mc.options.renderDistance * 16) && palette != null) {
             Font font = mc.font;
-            Vec3 vec3 = player.getViewVector(1.0F).normalize();
 
-            BoundingBox expanded = box.inflatedBy(3);
-
-            // Points representing corners of the 3D box
-            Vec3 boxMin = new Vec3(expanded.minX(), expanded.minY(), expanded.minZ());
-            Vec3 boxMax = new Vec3(expanded.maxX(), expanded.maxY(), expanded.maxZ());
-            Vec3 playerPos = new Vec3(player.getX(), player.getEyeY(), player.getZ());
-
-            boolean isLookingAtBox = false;
-
-            for (int face = 0; face < 6; face++) {
-                Vec3 normal;
-                Vec3 pointOnFace;
-
-                switch (face) {
-                    case 0: // +X face
-                        normal = new Vec3(1, 0, 0);
-                        pointOnFace = boxMax;
-                        break;
-                    case 1: // -X face
-                        normal = new Vec3(-1, 0, 0);
-                        pointOnFace = boxMin;
-                        break;
-                    case 2: // +Y face
-                        normal = new Vec3(0, 1, 0);
-                        pointOnFace = boxMax;
-                        break;
-                    case 3: // -Y face
-                        normal = new Vec3(0, -1, 0);
-                        pointOnFace = boxMin;
-                        break;
-                    case 4: // +Z face
-                        normal = new Vec3(0, 0, 1);
-                        pointOnFace = boxMax;
-                        break;
-                    case 5: // -Z face
-                    default:
-                        normal = new Vec3(0, 0, -1);
-                        pointOnFace = boxMin;
-                        break;
-                }
-
-                double t = (pointOnFace.subtract(playerPos)).dot(normal) / vec3.dot(normal);
-
-                if (t > 0) {
-                    Vec3 scaledVec3 = new Vec3(vec3.x * t, vec3.y * t, vec3.z * t);
-                    Vec3 intersection = playerPos.add(scaledVec3);
-
-                    if (intersection.x >= boxMin.x && intersection.x <= boxMax.x &&
-                            intersection.y >= boxMin.y && intersection.y <= boxMax.y &&
-                            intersection.z >= boxMin.z && intersection.z <= boxMax.z) {
-                        isLookingAtBox = true;
-                        break;
-                    }
-                }
-            }
-
-            if (player.getBoundingBox().intersects(box.minX(), box.minY(), box.minZ(), box.maxX(), box.maxY(), box.maxZ()) || isLookingAtBox) {
+            if (player.getBoundingBox().intersects(box.minX(), box.minY(), box.minZ(), box.maxX(), box.maxY(), box.maxZ()) || isLookingAtBox(player)) {
                 int y = mc.getWindow().getGuiScaledHeight() / 3;
 
-                for (Map.Entry<Block, List<StructureTemplate.StructureBlockInfo>> entry : remaining.entrySet()) {
+                for (Map.Entry<Block, List<StructureTemplate.StructureBlockInfo>> entry : palette.getCache().entrySet()) {
+                    int size = entry.getValue().size() - placed.get(entry.getKey());
+
                     int x = mc.getWindow().getGuiScaledWidth() - 30;
-                    font.drawShadow(stack, entry.getValue().size() + "", x - 18, y + 3, 23721831);
-                    renderCustomSlot(new ItemStack(entry.getKey().asItem()), x, y);
+                    font.drawShadow(stack, size + "", x - 18, y + 3, 23721831);
+
+                    RenderingUtil.renderCustomSlot(new ItemStack(entry.getKey().asItem()), x, y);
+
                     y += 18;
                 }
             }
@@ -148,64 +97,38 @@ public class RenderBuildablePiece {
         if (palette != null) {
             checkBlocks();
 
-            for (List<StructureTemplate.StructureBlockInfo> infos : remaining.values()) {
-                for (StructureTemplate.StructureBlockInfo info : infos) {
-                    BlockState state = info.state;
-                    BlockPos minPos = new BlockPos(box.minX(), box.minY(), box.minZ());
-
-                    BlockPos relativePos = info.pos;
-
-                    switch (rotation) {
-                        case COUNTERCLOCKWISE_90:
-                            relativePos = new BlockPos(relativePos.getZ(), relativePos.getY(), relativePos.getX());
-                            break;
-                        case CLOCKWISE_180:
-                            relativePos = new BlockPos(relativePos.getX(), relativePos.getY(), -relativePos.getZ() + box.getZSpan() - 1);
-                            break;
-                        case CLOCKWISE_90:
-                            relativePos = new BlockPos(-relativePos.getZ() + box.getXSpan() - 1, relativePos.getY(), relativePos.getX());
-                            break;
-                    }
-
-                    // Translate to world position
-                    BlockPos actualPos = minPos.offset(relativePos);
-
-                    if (!state.isAir()) {
-                        RenderingUtil.renderBlock(stack, state, actualPos);
-                    }
-                }
+            for (Pair<BlockPos, BlockState> pair : blocksToRender) {
+                RenderingUtil.renderBlock(stack, pair.getFirst(), pair.getSecond());
             }
         }
     }
 
-    private void renderCustomSlot(ItemStack itemstack, int x, int y) {
-        Minecraft mc = Minecraft.getInstance();
+    private void rotate() {
+        assert palette != null;
 
-        if (mc.player != null) {
-            ItemRenderer itemRenderer = mc.getItemRenderer();
-            Font font = mc.font;
+        for (Map.Entry<Block, List<StructureTemplate.StructureBlockInfo>> entry : palette.getCache().entrySet()) {
+            for (StructureTemplate.StructureBlockInfo info : entry.getValue()) {
+                BlockState state = info.state;
+                BlockPos minPos = new BlockPos(box.minX(), box.minY(), box.minZ());
+                BlockPos relativePos = info.pos;
 
-            int imageWidth = 176;
-            itemRenderer.blitOffset = 100.0F;
+                relativePos = switch (rotation) {
+                    case COUNTERCLOCKWISE_90 ->
+                            new BlockPos(relativePos.getZ(), relativePos.getY(), relativePos.getX());
+                    case CLOCKWISE_180 ->
+                            new BlockPos(relativePos.getX(), relativePos.getY(), -relativePos.getZ() + box.getZSpan() - 1);
+                    case CLOCKWISE_90 ->
+                            new BlockPos(-relativePos.getZ() + box.getXSpan() - 1, relativePos.getY(), relativePos.getX());
+                    default -> info.pos;
+                };
 
-            //Render item icon
-            RenderSystem.enableDepthTest();
-            itemRenderer.renderAndDecorateItem(mc.player, itemstack, x, y, x + y * imageWidth);
+                state = state.rotate(Minecraft.getInstance().level, relativePos, rotation);
 
-            //Render item string count
-            PoseStack posestack = new PoseStack();
-            if (itemstack.getCount() != 1) {
-                String s = String.valueOf(itemstack.getCount());
-                posestack.translate(0.0D, 0.0D, itemRenderer.blitOffset + 200.0F);
-                MultiBufferSource.BufferSource multibuffersource$buffersource = MultiBufferSource.immediate(Tesselator.getInstance().getBuilder());
+                // Translate to world position
+                BlockPos actualPos = minPos.offset(relativePos);
 
-                float stringX = (x + 19f - 2 - font.width(s));
-                float stringY = (y + 6f + 3);
-                font.drawInBatch(s,stringX,stringY,16777215, true, posestack.last().pose(), multibuffersource$buffersource, false, 0, 15728880);
-
-                multibuffersource$buffersource.endBatch();
+                relativeToWorld.add(Pair.of(actualPos, state));
             }
-            itemRenderer.blitOffset = 0.0F;
         }
     }
 
@@ -214,54 +137,92 @@ public class RenderBuildablePiece {
         Level level = mc.level;
 
         if (level != null && palette != null) {
-            remaining.clear();
-            remaining.putAll(palette.getCache());
+            for (Pair<BlockPos, BlockState> pair : relativeToWorld) {
+                BlockState state = level.getBlockState(pair.getFirst());
 
-            List<Pair<BlockPos, BlockState>> blocks = getAllPlacedBlocks();
-            for (Pair<BlockPos, BlockState> pair : blocks) {
-                List<StructureTemplate.StructureBlockInfo> t = remaining.get(pair.getSecond().getBlock());
+                boolean same = pair.getSecond().equals(state);
+                Block block = pair.getSecond().getBlock();
 
-                if (t != null) {
-                    List<StructureTemplate.StructureBlockInfo> list = new ArrayList<>(t);
-                    List<StructureTemplate.StructureBlockInfo> remove = new ArrayList<>();
-
-                    for (StructureTemplate.StructureBlockInfo info : list) {
-                        BlockPos minPos = new BlockPos(box.minX(), box.minY(), box.minZ());
-                        BlockPos pos = minPos.offset(info.pos);
-
-                        if (pos.equals(pair.getFirst())) {
-                            remove.add(info);
+                if (same && blocksToRender.contains(pair)) {
+                    placed.compute(block, (b, i) -> {
+                        if (i != null) {
+                            return i + 1;
                         }
-                    }
+                        return 0;
+                    });
 
-                    if (remove.size() > 0) {
-                        list.removeAll(remove);
-                        remaining.put(pair.getSecond().getBlock(), list);
-                    }
+                    blocksToRender.remove(pair);
+                }
+                else if (!same && !blocksToRender.contains(pair)) {
+                    blocksToRender.add(pair);
+
+                    placed.compute(block, (b, i) -> {
+                        if (i != null) {
+                            return i - 1;
+                        }
+                        return 0;
+                    });
                 }
             }
         }
     }
 
-    private List<Pair<BlockPos, BlockState>> getAllPlacedBlocks() {
-        List<Pair<BlockPos, BlockState>> states = new ArrayList<>();
-        Level level = Minecraft.getInstance().level;
+    private boolean isLookingAtBox(Player player) {
+        Vec3 vec3 = player.getViewVector(1.0F).normalize();
 
-        if (level != null) {
-            for (int x = box.minX(); x <= box.maxX(); x++) {
-                for (int y = box.minY(); y <= box.maxY(); y++) {
-                    for (int z = box.minZ(); z <= box.maxZ(); z++) {
-                        BlockPos pos = new BlockPos(x, y, z);
-                        BlockState state = level.getBlockState(pos);
+        BoundingBox expanded = box.inflatedBy(3);
 
-                        if (!state.isAir()) {
-                            states.add(Pair.of(pos, state));
-                        }
-                    }
+        // Points representing corners of the 3D box
+        Vec3 boxMin = new Vec3(expanded.minX(), expanded.minY(), expanded.minZ());
+        Vec3 boxMax = new Vec3(expanded.maxX(), expanded.maxY(), expanded.maxZ());
+        Vec3 playerPos = new Vec3(player.getX(), player.getEyeY(), player.getZ());
+
+        for (int face = 0; face < 6; face++) {
+            Vec3 normal;
+            Vec3 pointOnFace;
+
+            switch (face) {
+                case 0: // +X face
+                    normal = new Vec3(1, 0, 0);
+                    pointOnFace = boxMax;
+                    break;
+                case 1: // -X face
+                    normal = new Vec3(-1, 0, 0);
+                    pointOnFace = boxMin;
+                    break;
+                case 2: // +Y face
+                    normal = new Vec3(0, 1, 0);
+                    pointOnFace = boxMax;
+                    break;
+                case 3: // -Y face
+                    normal = new Vec3(0, -1, 0);
+                    pointOnFace = boxMin;
+                    break;
+                case 4: // +Z face
+                    normal = new Vec3(0, 0, 1);
+                    pointOnFace = boxMax;
+                    break;
+                case 5: // -Z face
+                default:
+                    normal = new Vec3(0, 0, -1);
+                    pointOnFace = boxMin;
+                    break;
+            }
+
+            double t = (pointOnFace.subtract(playerPos)).dot(normal) / vec3.dot(normal);
+
+            if (t > 0) {
+                Vec3 scaledVec3 = new Vec3(vec3.x * t, vec3.y * t, vec3.z * t);
+                Vec3 intersection = playerPos.add(scaledVec3);
+
+                if (intersection.x >= boxMin.x && intersection.x <= boxMax.x &&
+                        intersection.y >= boxMin.y && intersection.y <= boxMax.y &&
+                        intersection.z >= boxMin.z && intersection.z <= boxMax.z) {
+                    return true;
                 }
             }
         }
-        return states;
+        return false;
     }
 
     @Override
