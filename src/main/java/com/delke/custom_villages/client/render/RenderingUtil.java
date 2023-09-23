@@ -4,13 +4,19 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.block.BlockRenderDispatcher;
+import net.minecraft.client.renderer.entity.ItemRenderer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.model.data.EmptyModelData;
 
 /**
@@ -18,6 +24,7 @@ import net.minecraftforge.client.model.data.EmptyModelData;
  * @created 07/30/2023 - 12:18 PM
  * @project structures-1.18.2
  */
+@OnlyIn(Dist.CLIENT)
 public class RenderingUtil {
     public static void renderBoundingBox(PoseStack stack, BoundingBox box) {
         PoseStack posestack = RenderSystem.getModelViewStack();
@@ -96,7 +103,7 @@ public class RenderingUtil {
         bufferbuilder.vertex(maxX, h, maxZ).color(1.0F, 0.0F, 0.0F, 0.0F).endVertex();
     }
 
-    public static void renderBlock(PoseStack matrix, BlockState state, BlockPos pos) {
+    public static void renderBlock(PoseStack matrix, BlockPos pos, BlockState state) {
         Minecraft mc = Minecraft.getInstance();
 
         if (mc.level != null) {
@@ -124,6 +131,37 @@ public class RenderingUtil {
                     EmptyModelData.INSTANCE
             );
             matrix.popPose();
+        }
+    }
+
+    public static void renderCustomSlot(ItemStack itemstack, int x, int y) {
+        Minecraft mc = Minecraft.getInstance();
+
+        if (mc.player != null) {
+            ItemRenderer itemRenderer = mc.getItemRenderer();
+            Font font = mc.font;
+
+            int imageWidth = 176;
+            itemRenderer.blitOffset = 100.0F;
+
+            //Render item icon
+            RenderSystem.enableDepthTest();
+            itemRenderer.renderAndDecorateItem(mc.player, itemstack, x, y, x + y * imageWidth);
+
+            //Render item string count
+            PoseStack posestack = new PoseStack();
+            if (itemstack.getCount() != 1) {
+                String s = String.valueOf(itemstack.getCount());
+                posestack.translate(0.0D, 0.0D, itemRenderer.blitOffset + 200.0F);
+                MultiBufferSource.BufferSource multibuffersource$buffersource = MultiBufferSource.immediate(Tesselator.getInstance().getBuilder());
+
+                float stringX = (x + 19f - 2 - font.width(s));
+                float stringY = (y + 6f + 3);
+                font.drawInBatch(s,stringX,stringY,16777215, true, posestack.last().pose(), multibuffersource$buffersource, false, 0, 15728880);
+
+                multibuffersource$buffersource.endBatch();
+            }
+            itemRenderer.blitOffset = 0.0F;
         }
     }
 }
