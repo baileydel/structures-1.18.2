@@ -23,6 +23,9 @@ import java.util.stream.Collectors;
  * @created 08/22/2023 - 11:56 AM
  * @project structures-1.18.2
  */
+
+//TODO This should really only be a pallete for the structure
+    // the buildable piece should contain all of the placement info
 public class ModPalette {
     private List<StructureTemplate.StructureBlockInfo> blocks;
     private final Map<Block, List<StructureTemplate.StructureBlockInfo>> cache = Maps.newHashMap();
@@ -82,6 +85,8 @@ public class ModPalette {
     }
 
     public Map<Block, List<StructureTemplate.StructureBlockInfo>> getCache() {
+        this.cache.remove(Blocks.AIR);
+        this.cache.remove(Blocks.JIGSAW);
         return this.cache;
     }
 
@@ -110,7 +115,6 @@ public class ModPalette {
             p_74577_.add(p_74574_);
         }
     }
-
 
     static class SimplePalette implements Iterable<BlockState> {
         public static final BlockState DEFAULT_BLOCK_STATE = Blocks.AIR.defaultBlockState();
