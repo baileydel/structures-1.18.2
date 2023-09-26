@@ -54,9 +54,7 @@ public class ModStructureManager {
 
     public static List<StructurePiece> removePiece(StructureStart start, String location) {
         List<StructurePiece> out = new ArrayList<>(start.getPieces());
-
         StructurePiece piece = getPiece(out, location);
-
         out.remove(piece);
         return out;
     }
