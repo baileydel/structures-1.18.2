@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Optional;
 
-public class SkyStructures extends StructureFeature<JigsawConfiguration> {
+public class VillageStructure extends StructureFeature<JigsawConfiguration> {
     public static final Codec<JigsawConfiguration> CODEC = RecordCodecBuilder.create((codec) ->
         codec.group(
                 StructureTemplatePool.CODEC.fieldOf("start_pool").forGetter(JigsawConfiguration::startPool),
@@ -25,9 +25,9 @@ public class SkyStructures extends StructureFeature<JigsawConfiguration> {
         ).apply(codec, JigsawConfiguration::new)
     );
 
-    public SkyStructures() {
+    public VillageStructure() {
         // Create the pieces layout of the structure and give it to the game
-        super(CODEC, SkyStructures::createPiecesGenerator, PostPlacementProcessor.NONE);
+        super(CODEC, VillageStructure::createPiecesGenerator, PostPlacementProcessor.NONE);
     }
 
     @Override

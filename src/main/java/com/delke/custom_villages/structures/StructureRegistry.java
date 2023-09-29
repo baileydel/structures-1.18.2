@@ -25,7 +25,7 @@ public class StructureRegistry {
      * Registers the base structure itself and sets what its path is. In this case,
      * this base structure will have the resourcelocation of structure_tutorial:sky_structures.
      */
-    public static final RegistryObject<StructureFeature<JigsawConfiguration>> SKY_STRUCTURES = DEFERRED_REGISTRY_STRUCTURE.register("road", SkyStructures::new);
+    public static final RegistryObject<StructureFeature<JigsawConfiguration>> SKY_STRUCTURES = DEFERRED_REGISTRY_STRUCTURE.register("road", VillageStructure::new);
 
     public static final DeferredRegister<StructurePieceType> REGISTER = DeferredRegister.create(Registry.STRUCTURE_PIECE_REGISTRY, Main.MODID);
 
