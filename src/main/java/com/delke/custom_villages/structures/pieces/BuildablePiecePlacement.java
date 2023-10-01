@@ -35,10 +35,10 @@ import org.slf4j.Logger;
 import java.util.*;
 import java.util.function.Predicate;
 
-public class NewJigsawPlacement {
+public class BuildablePiecePlacement {
    static final Logger LOGGER = LogUtils.getLogger();
 
-   public static Optional<PieceGenerator<JigsawConfiguration>> addPieces(PieceGeneratorSupplier.Context<JigsawConfiguration> context, NewJigsawPlacement.PieceFactory factory, BlockPos pos, boolean p_210288_, boolean p_210289_) {
+   public static Optional<PieceGenerator<JigsawConfiguration>> addPieces(PieceGeneratorSupplier.Context<JigsawConfiguration> context, BuildablePiecePlacement.PieceFactory factory, BlockPos pos, boolean p_210288_, boolean p_210289_) {
       WorldgenRandom worldgenrandom = new WorldgenRandom(new LegacyRandomSource(0L));
       worldgenrandom.setLargeFeatureSeed(context.seed(), context.chunkPos().x, context.chunkPos().z);
       RegistryAccess registryaccess = context.registryAccess();
@@ -82,11 +82,11 @@ public class NewJigsawPlacement {
          list.add(buildablePiece);
          if (jigsawconfiguration.maxDepth() > 0) {
             AABB aabb = new AABB(i - 80, k - 80, j - 80, i + 80 + 1, k + 80 + 1, j + 80 + 1);
-            NewJigsawPlacement.Placer jigsawplacement$placer = new NewJigsawPlacement.Placer(registry, jigsawconfiguration.maxDepth(), factory, chunkgenerator, structuremanager, list, worldgenrandom);
-            jigsawplacement$placer.placing.addLast(new NewJigsawPlacement.PieceState(buildablePiece, new MutableObject<>(Shapes.join(Shapes.create(aabb), Shapes.create(AABB.of(boundingbox)), BooleanOp.ONLY_FIRST)), 0));
+            BuildablePiecePlacement.Placer jigsawplacement$placer = new BuildablePiecePlacement.Placer(registry, jigsawconfiguration.maxDepth(), factory, chunkgenerator, structuremanager, list, worldgenrandom);
+            jigsawplacement$placer.placing.addLast(new BuildablePiecePlacement.PieceState(buildablePiece, new MutableObject<>(Shapes.join(Shapes.create(aabb), Shapes.create(AABB.of(boundingbox)), BooleanOp.ONLY_FIRST)), 0));
 
             while(!jigsawplacement$placer.placing.isEmpty()) {
-               NewJigsawPlacement.PieceState jigsawplacement$piecestate = jigsawplacement$placer.placing.removeFirst();
+               BuildablePiecePlacement.PieceState jigsawplacement$piecestate = jigsawplacement$placer.placing.removeFirst();
                jigsawplacement$placer.tryPlacingChildren(jigsawplacement$piecestate.piece, jigsawplacement$piecestate.free, jigsawplacement$piecestate.depth, p_210288_, levelheightaccessor);
             }
 
@@ -114,14 +114,14 @@ public class NewJigsawPlacement {
    static final class Placer {
       private final Registry<StructureTemplatePool> pools;
       private final int maxDepth;
-      private final NewJigsawPlacement.PieceFactory factory;
+      private final BuildablePiecePlacement.PieceFactory factory;
       private final ChunkGenerator chunkGenerator;
       private final StructureManager structureManager;
       private final List<? super BuildablePiece> pieces;
       private final Random random;
       final Deque<PieceState> placing = Queues.newArrayDeque();
 
-      Placer(Registry<StructureTemplatePool> p_210323_, int p_210324_, NewJigsawPlacement.PieceFactory p_210325_, ChunkGenerator p_210326_, StructureManager p_210327_, List<? super BuildablePiece> p_210328_, Random p_210329_) {
+      Placer(Registry<StructureTemplatePool> p_210323_, int p_210324_, BuildablePiecePlacement.PieceFactory p_210325_, ChunkGenerator p_210326_, StructureManager p_210327_, List<? super BuildablePiece> p_210328_, Random p_210329_) {
          this.pools = p_210323_;
          this.maxDepth = p_210324_;
          this.factory = p_210325_;
@@ -260,7 +260,7 @@ public class NewJigsawPlacement {
                                  poolelementstructurepiece.addJunction(new JigsawJunction(blockpos1.getX(), l2 - j1 + k2, blockpos1.getZ(), -k1, structuretemplatepool$projection));
                                  this.pieces.add(poolelementstructurepiece);
                                  if (p_210336_ + 1 <= this.maxDepth) {
-                                    this.placing.addLast(new NewJigsawPlacement.PieceState(poolelementstructurepiece, mutableobject1, p_210336_ + 1));
+                                    this.placing.addLast(new BuildablePiecePlacement.PieceState(poolelementstructurepiece, mutableobject1, p_210336_ + 1));
                                  }
                                  continue label139;
                               }
@@ -270,11 +270,11 @@ public class NewJigsawPlacement {
                   }
                }
                else {
-                  NewJigsawPlacement.LOGGER.warn("Empty or non-existent fallback pool: {}", resourcelocation1);
+                  BuildablePiecePlacement.LOGGER.warn("Empty or non-existent fallback pool: {}", resourcelocation1);
                }
             }
             else {
-               NewJigsawPlacement.LOGGER.warn("Empty or non-existent pool: {}", resourcelocation);
+               BuildablePiecePlacement.LOGGER.warn("Empty or non-existent pool: {}", resourcelocation);
             }
          }
       }
