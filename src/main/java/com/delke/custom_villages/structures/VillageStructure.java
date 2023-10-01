@@ -1,7 +1,7 @@
 package com.delke.custom_villages.structures;
 
 import com.delke.custom_villages.structures.pieces.BuildablePiece;
-import com.delke.custom_villages.structures.pieces.NewJigsawPlacement;
+import com.delke.custom_villages.structures.pieces.BuildablePiecePlacement;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.BlockPos;
@@ -80,7 +80,7 @@ public class VillageStructure extends StructureFeature<JigsawConfiguration> {
         // Since we are going to have heightmap/terrain height spawning set to true further down, this will make it so we spawn 60 blocks above terrain.
         // If we wanted to spawn on ocean floor, we would set heightmap/terrain height spawning to false and the grab the y value of the terrain with OCEAN_FLOOR_WG heightmap.
         Optional<PieceGenerator<JigsawConfiguration>> structurePiecesGenerator =
-                NewJigsawPlacement.addPieces(
+                BuildablePiecePlacement.addPieces(
                         context, // Used for JigsawPlacement to get all the proper behaviors done.
                         BuildablePiece::new, //,en making the structure's // Needed in order to create a list of jigsaw pieces wh layout.
                         blockpos, // Position of the structure. Y value is ignored if last parameter is set to true.
