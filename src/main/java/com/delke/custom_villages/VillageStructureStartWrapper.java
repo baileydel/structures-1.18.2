@@ -17,10 +17,8 @@ import java.util.Map;
  * @created 08/30/2023 - 2:36 PM
  * @project structures-1.18.2
  */
-public class ModStructureManager {
-
+public class VillageStructureStartWrapper {
     public static Map<ChunkPos, List<StructureStart>> startMap = new HashMap<>();
-
 
     @Nullable
     public static StructurePiece getPiece(List<StructurePiece> pieces, String location) {
