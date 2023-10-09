@@ -29,7 +29,6 @@ public abstract class StructureStartMixin {
              we want to make removing and adding pieces to a structure dynamic
              TODO Instead of removing them after generation, how about we see how they are built....
              and then add and remove from there
-
              But this is good for testing, to even see if this is how we should do it
          */
     @Inject(at = @At("TAIL"), method = "<init>")
@@ -54,15 +53,6 @@ public abstract class StructureStartMixin {
                     }
                 }
             }
-
-            //this.pieces.remove(piece1);
-
         }
-    }
-
-   
-
-    public void setPieceContainer(PiecesContainer pieceContainer) {
-        this.pieceContainer = pieceContainer;
     }
 }

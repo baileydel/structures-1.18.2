@@ -24,8 +24,8 @@ public class Network {
 
     public static void init() {
         INSTANCE.registerMessage(0, StructureDebugPacket.class, StructureDebugPacket::write, StructureDebugPacket::new, StructureDebugPacket::handle, Optional.of(NetworkDirection.PLAY_TO_CLIENT));
-        INSTANCE.registerMessage(1, ForcePacket.class, ForcePacket::write, ForcePacket::new, ForcePacket::handle);
+        INSTANCE.registerMessage(1, AddPieceStructurePacket.class, AddPieceStructurePacket::write, AddPieceStructurePacket::new, AddPieceStructurePacket::handle);
         INSTANCE.registerMessage(2, ClearPacket.class, ClearPacket::write, ClearPacket::new, ClearPacket::handle, Optional.of(NetworkDirection.PLAY_TO_SERVER));
-        INSTANCE.registerMessage(3, PieceTestPacket.class, PieceTestPacket::write, PieceTestPacket::new, PieceTestPacket::handle, Optional.of(NetworkDirection.PLAY_TO_SERVER));
+        INSTANCE.registerMessage(3, DeleteStructurePiecePacket.class, DeleteStructurePiecePacket::write, DeleteStructurePiecePacket::new, DeleteStructurePiecePacket::handle, Optional.of(NetworkDirection.PLAY_TO_SERVER));
     }
 }

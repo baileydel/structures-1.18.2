@@ -1,6 +1,6 @@
 package com.delke.custom_villages.network;
 
-import com.delke.custom_villages.ModStructureManager;
+import com.delke.custom_villages.VillageStructureStartWrapper;
 import com.delke.custom_villages.mixin.StructureStartAccessor;
 import com.delke.custom_villages.structures.pieces.BuildablePiece;
 import net.minecraft.core.BlockPos;
@@ -30,23 +30,23 @@ import java.util.function.Supplier;
  * @created 09/01/2023 - 10:56 PM
  * @project structures-1.18.2
  */
-public class PieceTestPacket {
-    public PieceTestPacket() {
+public class DeleteStructurePiecePacket {
+    public DeleteStructurePiecePacket() {
         System.out.println("Testing Packet");
     }
 
-    public PieceTestPacket(FriendlyByteBuf buf) {}
+    public DeleteStructurePiecePacket(FriendlyByteBuf buf) {}
 
     public void write(FriendlyByteBuf buf) {}
 
     /*
         Only handle on server
      */
-    public static void handle(PieceTestPacket msg, Supplier<NetworkEvent.Context> context) {
+    public static void handle(DeleteStructurePiecePacket msg, Supplier<NetworkEvent.Context> context) {
         NetworkEvent.Context ctx = context.get();
         ctx.enqueueWork(() -> {
             if (ctx.getSender() != null) {
-                List<StructureStart> starts = ModStructureManager.startMap.get(ForcePacket.STATIC_START);
+                List<StructureStart> starts = VillageStructureStartWrapper.startMap.get(AddPieceStructurePacket.STATIC_START);
 
                 if (starts != null) {
                     for (StructureStart start : starts) {
@@ -55,8 +55,8 @@ public class PieceTestPacket {
 
                         List<StructurePiece> newList = new ArrayList<>(start.getPieces());
 
-                        if (ModStructureManager.hasPiece(newList, "structure_tutorial:house_two")) {
-                            newList = ModStructureManager.removePiece(start, "structure_tutorial:house_two");
+                        if (VillageStructureStartWrapper.hasPiece(newList, "structure_tutorial:house_two")) {
+                            newList = VillageStructureStartWrapper.removePiece(start, "structure_tutorial:house_two");
                         }
 
                         print(newList);
@@ -77,13 +77,13 @@ public class PieceTestPacket {
     }
 
     private BuildablePiece createPiece() {
-        if (ForcePacket.STRUCTURE_FEATURE != null) {
+        if (AddPieceStructurePacket.STRUCTURE_FEATURE != null) {
             WorldgenRandom worldgenrandom = new WorldgenRandom(new LegacyRandomSource(0L));
 
-            worldgenrandom.setLargeFeatureSeed(ForcePacket.SEED, ForcePacket.STATIC_START.x, ForcePacket.STATIC_START.z);
-            JigsawConfiguration jigsawconfiguration = (JigsawConfiguration) ForcePacket.STRUCTURE_FEATURE.config;
+            worldgenrandom.setLargeFeatureSeed(AddPieceStructurePacket.SEED, AddPieceStructurePacket.STATIC_START.x, AddPieceStructurePacket.STATIC_START.z);
+            JigsawConfiguration jigsawconfiguration = (JigsawConfiguration) AddPieceStructurePacket.STRUCTURE_FEATURE.config;
 
-            StructureManager structuremanager = ForcePacket.STRUCTURE_MANAGER;
+            StructureManager structuremanager = AddPieceStructurePacket.STRUCTURE_MANAGER;
 
             StructureFeature.bootstrap();
             Rotation rotation = Rotation.getRandom(worldgenrandom);

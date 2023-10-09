@@ -93,7 +93,7 @@ public class Main {
             for (int z = Z_MIN; z < Z_MAX; z += 9) {
                 ChunkPos finalChunkPos = chunkPos;
 
-                ModStructureManager.startMap.computeIfAbsent(chunkPos, list -> {
+                VillageStructureStartWrapper.startMap.computeIfAbsent(chunkPos, list -> {
                     SectionPos sectionpos = SectionPos.of(finalChunkPos, 0);
 
                     Map<ConfiguredStructureFeature<?, ?>, LongSet> r = level.getChunk(sectionpos.x(), sectionpos.z(), ChunkStatus.STRUCTURE_REFERENCES).getAllReferences();

@@ -1,11 +1,11 @@
 package com.delke.custom_villages.client;
 
-import com.delke.custom_villages.ModStructureManager;
+import com.delke.custom_villages.VillageStructureStartWrapper;
 import com.delke.custom_villages.client.render.RenderBuildablePiece;
+import com.delke.custom_villages.network.AddPieceStructurePacket;
 import com.delke.custom_villages.network.ClearPacket;
-import com.delke.custom_villages.network.ForcePacket;
+import com.delke.custom_villages.network.DeleteStructurePiecePacket;
 import com.delke.custom_villages.network.Network;
-import com.delke.custom_villages.network.PieceTestPacket;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.world.entity.player.Player;
@@ -20,8 +20,6 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import static com.delke.custom_villages.network.ForcePacket.STATIC_START;
 
 /**
  * @author Bailey Delker
@@ -39,25 +37,18 @@ public class ClientEvents {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player != null && mc.level != null) {
             switch (event.getKey()) {
-                case 61: { // + Generate Structure
+                case 61:  // + Generate Structure
                     if (!loaded) {
-                        Network.INSTANCE.sendToServer(new ForcePacket());
+                        Network.INSTANCE.sendToServer(new AddPieceStructurePacket());
                         tick = 0;
                         break;
                     }
-                }
-                case 90: // Idk
-                    System.out.println("Has Piece: ");
-                    if (ModStructureManager.hasPiece(STATIC_START, ForcePacket.STRUCTURE_FEATURE, "structure_tutorial:road")) {
-                        System.out.println("dub");
-                    }
-                    break;
                 case 82: // R Clear Blocks, and reset structure..
                     Network.INSTANCE.sendToServer(new ClearPacket());
                     tick = 0;
                     break;
-                case 71: // G Delete a Piece
-                    Network.INSTANCE.sendToServer(new PieceTestPacket());
+                case 45: // G Delete a Piece
+                    Network.INSTANCE.sendToServer(new DeleteStructurePiecePacket());
                     tick = 0;
                     break;
             }
@@ -76,11 +67,9 @@ public class ClientEvents {
     }
 
     private void clear() {
-
         System.out.println("Clearing Pieces & Structure Starts");
         pieces.clear();
-        ModStructureManager.startMap.clear();
-
+        VillageStructureStartWrapper.startMap.clear();
     }
 
     @SubscribeEvent

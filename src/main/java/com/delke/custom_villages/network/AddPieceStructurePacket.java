@@ -35,7 +35,7 @@ import static com.delke.custom_villages.Main.MODID;
  * @created 06/20/2023 - 7:15 AM
  * @project structures-1.18.2
  */
-public class  ForcePacket {
+public class AddPieceStructurePacket {
     public static final ChunkPos STATIC_START = new ChunkPos(0, 0);
     public static long SEED = RandomSupport.seedUniquifier();
     public static RegistryAccess REGISTRY_ACCESS;
@@ -44,11 +44,11 @@ public class  ForcePacket {
     public static ChunkGenerator CHUNK_GENERATOR;
     public static ChunkAccess CHUNK;
 
-    public ForcePacket() {
+    public AddPieceStructurePacket() {
         System.out.println("Client - Trying to send ForcePacket");
     }
 
-    public ForcePacket(FriendlyByteBuf buf) {}
+    public AddPieceStructurePacket(FriendlyByteBuf buf) {}
 
     public void write(FriendlyByteBuf buf) {}
 
@@ -56,7 +56,7 @@ public class  ForcePacket {
         Only handle on server
      */
     //TODO Refactor this
-    public static void handle(ForcePacket msg, Supplier<NetworkEvent.Context> context) {
+    public static void handle(AddPieceStructurePacket msg, Supplier<NetworkEvent.Context> context) {
         NetworkEvent.Context ctx = context.get();
         ctx.enqueueWork(() -> {
             if (ctx.getSender() != null) {

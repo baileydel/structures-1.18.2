@@ -68,12 +68,12 @@ public class BuildablePiece extends StructurePiece {
         listtag.forEach((p_204943_) -> this.junctions.add(JigsawJunction.deserialize(new Dynamic<>(dynamicops, p_204943_))));
     }
 
-    protected void addAdditionalSaveData(StructurePieceSerializationContext p_192425_, CompoundTag nbt) {
+    protected void addAdditionalSaveData(StructurePieceSerializationContext context, CompoundTag nbt) {
         nbt.putInt("PosX", this.position.getX());
         nbt.putInt("PosY", this.position.getY());
         nbt.putInt("PosZ", this.position.getZ());
         nbt.putInt("ground_level_delta", this.groundLevelDelta);
-        DynamicOps<Tag> dynamicops = RegistryOps.create(NbtOps.INSTANCE, p_192425_.registryAccess());
+        DynamicOps<Tag> dynamicops = RegistryOps.create(NbtOps.INSTANCE, context.registryAccess());
         StructurePoolElement.CODEC.encodeStart(dynamicops, this.element).resultOrPartial(LOGGER::error).ifPresent((p_163125_) -> nbt.put("pool_element", p_163125_));
         nbt.putString("rotation", this.rotation.name());
         ListTag listtag = new ListTag();
@@ -84,8 +84,8 @@ public class BuildablePiece extends StructurePiece {
 
         nbt.put("junctions", listtag);
 
-        if (!nbt.contains("custom") && getStructureData() != null) {
-            nbt.put("custom", getStructureData());
+        if (!nbt.contains("block_data") && getStructureData() != null) {
+            nbt.put("block_data", getStructureData());
         }
     }
 
@@ -97,9 +97,9 @@ public class BuildablePiece extends StructurePiece {
         //this.element.place(this.structureManager, genLevel, featureManager, chunkGenerator, this.position, blockPos , this.rotation, boundingBox, random, idk);
     }
 
-    public void move(int p_72616_, int p_72617_, int p_72618_) {
-        super.move(p_72616_, p_72617_, p_72618_);
-        this.position = this.position.offset(p_72616_, p_72617_, p_72618_);
+    public void move(int x, int y, int z) {
+        super.move(x, y, z);
+        this.position = this.position.offset(x, y, z);
     }
 
     public @NotNull Rotation getRotation() {
@@ -118,12 +118,8 @@ public class BuildablePiece extends StructurePiece {
         return this.groundLevelDelta;
     }
 
-    public void addJunction(JigsawJunction p_209917_) {
-        this.junctions.add(p_209917_);
-    }
-
-    public List<JigsawJunction> getJunctions() {
-        return this.junctions;
+    public void addJunction(JigsawJunction junction) {
+        this.junctions.add(junction);
     }
 
     //TODO Retrieve tag from saved data
