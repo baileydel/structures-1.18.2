@@ -3,9 +3,9 @@ package com.delke.custom_villages.client;
 import com.delke.custom_villages.VillageStructureStartWrapper;
 import com.delke.custom_villages.client.render.RenderBuildablePiece;
 import com.delke.custom_villages.network.AddPieceStructurePacket;
-import com.delke.custom_villages.network.ClearPacket;
 import com.delke.custom_villages.network.DeleteStructurePiecePacket;
 import com.delke.custom_villages.network.Network;
+import com.delke.custom_villages.network.ResetStructurePacket;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.world.entity.player.Player;
@@ -29,28 +29,20 @@ import java.util.List;
 @OnlyIn(Dist.CLIENT)
 public class ClientEvents {
     public static final List<RenderBuildablePiece> pieces = new ArrayList<>();
-    private boolean loaded = false;
     private int tick = 21;
+    private boolean sentPacket = false;
 
     @SubscribeEvent
     public void OnKey(InputEvent.KeyInputEvent event) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player != null && mc.level != null) {
             switch (event.getKey()) {
-                case 61:  // + Generate Structure
-                    if (!loaded) {
-                        Network.INSTANCE.sendToServer(new AddPieceStructurePacket());
-                        tick = 0;
-                        break;
-                    }
-                case 82: // R Clear Blocks, and reset structure..
-                    Network.INSTANCE.sendToServer(new ClearPacket());
-                    tick = 0;
-                    break;
-                case 45: // G Delete a Piece
-                    Network.INSTANCE.sendToServer(new DeleteStructurePiecePacket());
-                    tick = 0;
-                    break;
+                case 61 ->  // + Generate Structure
+                        sendPacket(new AddPieceStructurePacket());
+                case 82 -> // R Clear Blocks, and reset structure..
+                        sendPacket(new ResetStructurePacket());
+                case 45 -> // G Delete a Piece
+                        sendPacket(new DeleteStructurePiecePacket());
             }
         }
     }
@@ -70,6 +62,7 @@ public class ClientEvents {
         System.out.println("Clearing Pieces & Structure Starts");
         pieces.clear();
         VillageStructureStartWrapper.startMap.clear();
+        sentPacket = false;
     }
 
     @SubscribeEvent
@@ -108,6 +101,14 @@ public class ClientEvents {
                     piece.renderWorld(event.getPoseStack());
                 }
             }
+        }
+    }
+
+    private void sendPacket(Object packet) {
+        if (!sentPacket) {
+            Network.INSTANCE.sendToServer(packet);
+            this.tick = 0;
+            sentPacket = true;
         }
     }
 }
