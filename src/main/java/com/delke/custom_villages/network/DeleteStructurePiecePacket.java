@@ -46,7 +46,7 @@ public class DeleteStructurePiecePacket {
         NetworkEvent.Context ctx = context.get();
         ctx.enqueueWork(() -> {
             if (ctx.getSender() != null) {
-                List<StructureStart> starts = VillageStructureStartWrapper.startMap.get(AddPieceStructurePacket.STATIC_START);
+                List<StructureStart> starts = VillageStructureStartWrapper.startMap.get(ResetStructurePacket.STATIC_START);
 
                 if (starts != null) {
                     for (StructureStart start : starts) {
@@ -55,8 +55,8 @@ public class DeleteStructurePiecePacket {
 
                         List<StructurePiece> newList = new ArrayList<>(start.getPieces());
 
-                        if (VillageStructureStartWrapper.hasPiece(newList, "structure_tutorial:house_two")) {
-                            newList = VillageStructureStartWrapper.removePiece(start, "structure_tutorial:house_two");
+                        if (newList.size() > 0) {
+                            newList.remove(newList.size() - 1);
                         }
 
                         print(newList);
@@ -77,13 +77,13 @@ public class DeleteStructurePiecePacket {
     }
 
     private BuildablePiece createPiece() {
-        if (AddPieceStructurePacket.STRUCTURE_FEATURE != null) {
+        if (ResetStructurePacket.STRUCTURE_FEATURE != null) {
             WorldgenRandom worldgenrandom = new WorldgenRandom(new LegacyRandomSource(0L));
 
-            worldgenrandom.setLargeFeatureSeed(AddPieceStructurePacket.SEED, AddPieceStructurePacket.STATIC_START.x, AddPieceStructurePacket.STATIC_START.z);
-            JigsawConfiguration jigsawconfiguration = (JigsawConfiguration) AddPieceStructurePacket.STRUCTURE_FEATURE.config;
+            worldgenrandom.setLargeFeatureSeed(ResetStructurePacket.SEED, ResetStructurePacket.STATIC_START.x, ResetStructurePacket.STATIC_START.z);
+            JigsawConfiguration jigsawconfiguration = (JigsawConfiguration) ResetStructurePacket.STRUCTURE_FEATURE.config;
 
-            StructureManager structuremanager = AddPieceStructurePacket.STRUCTURE_MANAGER;
+            StructureManager structuremanager = ResetStructurePacket.STRUCTURE_MANAGER;
 
             StructureFeature.bootstrap();
             Rotation rotation = Rotation.getRandom(worldgenrandom);
