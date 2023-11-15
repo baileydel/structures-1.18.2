@@ -1,5 +1,6 @@
 package com.delke.custom_villages.network;
 
+import com.delke.custom_villages.structures.villagestructure.VillageStructure;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.*;
 import net.minecraft.network.FriendlyByteBuf;
@@ -33,7 +34,7 @@ import static com.delke.custom_villages.Main.MODID;
  * @created 09/01/2023 - 2:20 PM
  * @project structures-1.18.2
  */
-public class ResetStructurePacket {
+public class GenerateStructurePacket {
     /*
    TODO this is all static things for now
    should be random or inputted by the person sending the packet
@@ -47,9 +48,9 @@ public class ResetStructurePacket {
     public static ChunkAccess CHUNK;
 
 
-    public ResetStructurePacket() {}
+    public GenerateStructurePacket() {}
 
-    public ResetStructurePacket(FriendlyByteBuf buf) {}
+    public GenerateStructurePacket(FriendlyByteBuf buf) {}
 
     public void write(FriendlyByteBuf buf) {}
 
@@ -57,10 +58,12 @@ public class ResetStructurePacket {
         Only handle on server
      */
     //TODO Refactor this
-    public static void handle(ResetStructurePacket msg, Supplier<NetworkEvent.Context> context) {
+    public static void handle(GenerateStructurePacket msg, Supplier<NetworkEvent.Context> context) {
         NetworkEvent.Context ctx = context.get();
         ctx.enqueueWork(() -> {
             if (ctx.getSender() != null) {
+                VillageStructure.INSTANCES.clear();
+
                 ServerLevel level = ctx.getSender().getLevel();
                 STRUCTURE_FEATURE = makeStructure();
 
@@ -147,7 +150,10 @@ public class ResetStructurePacket {
 
             Predicate<Holder<Biome>> predicate = (w) -> true;
 
+            //TODO HMMm
             StructureStart structurestart =  configuredstructurefeature.generate(access, generator, generator.getBiomeSource(), p_208020_, p_208021_, chunkPos, i, chunkAccess, predicate);
+
+
             if (structurestart.isValid()) {
                 featureManager.setStartForFeature(sectionPos, configuredstructurefeature, structurestart, chunkAccess);
                 return structurestart;
