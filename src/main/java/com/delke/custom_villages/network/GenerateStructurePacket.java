@@ -1,11 +1,13 @@
 package com.delke.custom_villages.network;
 
+import com.delke.custom_villages.structures.StructureHandler;
 import com.delke.custom_villages.structures.villagestructure.VillageStructure;
-import net.minecraft.client.Minecraft;
-import net.minecraft.core.*;
+import com.delke.custom_villages.structures.villagestructure.VillageStructureInstance;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
+import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.SectionPos;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.LevelHeightAccessor;
@@ -14,7 +16,6 @@ import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ChunkGenerator;
-import net.minecraft.world.level.levelgen.RandomSupport;
 import net.minecraft.world.level.levelgen.WorldgenRandom;
 import net.minecraft.world.level.levelgen.XoroshiroRandomSource;
 import net.minecraft.world.level.levelgen.feature.ConfiguredStructureFeature;
@@ -27,32 +28,30 @@ import java.util.Map;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-import static com.delke.custom_villages.Main.MODID;
-
 /**
  * @author Bailey Delker
  * @created 09/01/2023 - 2:20 PM
  * @project structures-1.18.2
  */
+
 public class GenerateStructurePacket {
-    /*
-   TODO this is all static things for now
-   should be random or inputted by the person sending the packet
-    */
-    public static final ChunkPos STATIC_START = new ChunkPos(0, 0);
-    public static long SEED = RandomSupport.seedUniquifier();
-    public static RegistryAccess REGISTRY_ACCESS;
-    public static ConfiguredStructureFeature<?, ?> STRUCTURE_FEATURE;
-    public static StructureManager STRUCTURE_MANAGER;
-    public static ChunkGenerator CHUNK_GENERATOR;
-    public static ChunkAccess CHUNK;
+    public int x;
+    public int z;
 
+    public GenerateStructurePacket(int chunkX, int chunkZ) {
+        x = chunkX;
+        z = chunkZ;
+    }
 
-    public GenerateStructurePacket() {}
+    public GenerateStructurePacket(FriendlyByteBuf buf) {
+        x = buf.readInt();
+        z = buf.readInt();
+    }
 
-    public GenerateStructurePacket(FriendlyByteBuf buf) {}
-
-    public void write(FriendlyByteBuf buf) {}
+    public void write(FriendlyByteBuf buf) {
+        buf.writeInt(x);
+        buf.writeInt(z);
+    }
 
     /*
         Only handle on server
@@ -62,33 +61,35 @@ public class GenerateStructurePacket {
         NetworkEvent.Context ctx = context.get();
         ctx.enqueueWork(() -> {
             if (ctx.getSender() != null) {
-                VillageStructure.INSTANCES.clear();
+                StructureHandler.INSTANCES.clear();
 
-                ServerLevel level = ctx.getSender().getLevel();
-                STRUCTURE_FEATURE = makeStructure();
+                ConfiguredStructureFeature<?, ?> feature = VillageStructureInstance.makeStructure();
 
-                if (STRUCTURE_FEATURE != null) {
-                    CHUNK = level.getChunk(STATIC_START.x, STATIC_START.z);
-                    CHUNK.setAllStarts(Map.of());
+                if (feature != null) {
+                    ServerLevel level = ctx.getSender().getLevel();
+                    ChunkPos pos = new ChunkPos(msg.x, msg.z);
+                    ChunkAccess chunk = level.getChunk(msg.x, msg.z);
 
-                    STRUCTURE_MANAGER = level.getStructureManager();
+                    chunk.setAllStarts(Map.of());
+
+                    StructureManager STRUCTURE_MANAGER = level.getStructureManager();
                     StructureFeatureManager featureManager = level.structureFeatureManager();
-                    REGISTRY_ACCESS = featureManager.registryAccess();
+                    RegistryAccess REGISTRY_ACCESS = featureManager.registryAccess();
 
-                    SectionPos sectionPos = SectionPos.of(STATIC_START, 0);
-                    CHUNK_GENERATOR = level.getChunkSource().getGenerator();
-                    StructureStart start = tryGenerateStructure(STRUCTURE_FEATURE, CHUNK_GENERATOR, featureManager, REGISTRY_ACCESS, STRUCTURE_MANAGER, SEED, CHUNK, STATIC_START, sectionPos);
+                    SectionPos sectionPos = SectionPos.of(pos, 0);
+                    ChunkGenerator generator = level.getChunkSource().getGenerator();
+                    StructureStart start = tryGenerateStructure(feature, generator, featureManager, REGISTRY_ACCESS, STRUCTURE_MANAGER, VillageStructure.SEED, chunk, pos, sectionPos);
 
-                    CHUNK.setStartForFeature(STRUCTURE_FEATURE, start);
-                    CHUNK.addReferenceForFeature(STRUCTURE_FEATURE, ChunkPos.asLong(0, 0));
+                    chunk.setStartForFeature(feature, start);
+                    chunk.addReferenceForFeature(feature, ChunkPos.asLong(0, 0));
 
-                    WorldgenRandom worldgenrandom = new WorldgenRandom(new XoroshiroRandomSource(SEED));
+                    WorldgenRandom worldgenrandom = new WorldgenRandom(new XoroshiroRandomSource(VillageStructure.SEED));
 
                     if (start != StructureStart.INVALID_START) {
-                        BoundingBox box = getWritableArea(CHUNK);
+                        BoundingBox box = getWritableArea(chunk);
 
-                        featureManager.startsForFeature(sectionPos, STRUCTURE_FEATURE).forEach(
-                                (structureStart) -> structureStart.placeInChunk(level, featureManager, CHUNK_GENERATOR, worldgenrandom, box, STATIC_START)
+                        featureManager.startsForFeature(sectionPos, feature).forEach(
+                                (structureStart) -> structureStart.placeInChunk(level, featureManager, generator, worldgenrandom, box, pos)
                         );
                     }
                 }
@@ -119,30 +120,16 @@ public class GenerateStructurePacket {
     }
 
 
-    private static BoundingBox getWritableArea(ChunkAccess p_187718_) {
-        ChunkPos chunkpos = p_187718_.getPos();
+    private static BoundingBox getWritableArea(ChunkAccess chunkAccess) {
+        ChunkPos chunkpos = chunkAccess.getPos();
         int i = chunkpos.getMinBlockX();
         int j = chunkpos.getMinBlockZ();
-        LevelHeightAccessor levelheightaccessor = p_187718_.getHeightAccessorForGeneration();
+        LevelHeightAccessor levelheightaccessor = chunkAccess.getHeightAccessorForGeneration();
         int k = levelheightaccessor.getMinBuildHeight() + 1;
         int l = levelheightaccessor.getMaxBuildHeight() - 1;
         return new BoundingBox(i, k, j, i + 15, l, j + 15);
     }
 
-    private static ConfiguredStructureFeature<?, ?> makeStructure() {
-        Minecraft mc = Minecraft.getInstance();
-
-        if (mc.level != null && mc.getSingleplayerServer() != null) {
-            ServerLevel level = mc.getSingleplayerServer().getLevel(mc.level.dimension());
-
-            if (level != null) {
-                ResourceKey<ConfiguredStructureFeature<?, ?>> th = ResourceKey.create(Registry.CONFIGURED_STRUCTURE_FEATURE_REGISTRY, new ResourceLocation(MODID, "code_structure_sky_fan"));
-
-                return level.registryAccess().registryOrThrow(Registry.CONFIGURED_STRUCTURE_FEATURE_REGISTRY).getOrThrow(th);
-            }
-        }
-        return null;
-    }
 
     private static StructureStart tryGenerateStructure(ConfiguredStructureFeature<?, ?> configuredstructurefeature, ChunkGenerator generator, StructureFeatureManager featureManager, RegistryAccess access, StructureManager p_208020_, long p_208021_, ChunkAccess chunkAccess, ChunkPos chunkPos, SectionPos sectionPos) {
         try {
@@ -150,9 +137,7 @@ public class GenerateStructurePacket {
 
             Predicate<Holder<Biome>> predicate = (w) -> true;
 
-            //TODO HMMm
-            StructureStart structurestart =  configuredstructurefeature.generate(access, generator, generator.getBiomeSource(), p_208020_, p_208021_, chunkPos, i, chunkAccess, predicate);
-
+            StructureStart structurestart = configuredstructurefeature.generate(access, generator, generator.getBiomeSource(), p_208020_, p_208021_, chunkPos, i, chunkAccess, predicate);
 
             if (structurestart.isValid()) {
                 featureManager.setStartForFeature(sectionPos, configuredstructurefeature, structurestart, chunkAccess);
