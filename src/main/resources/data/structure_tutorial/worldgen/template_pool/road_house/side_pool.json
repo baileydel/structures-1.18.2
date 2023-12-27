@@ -5,7 +5,6 @@
     {
       "weight": 1,
       "element": {
-
         "location": "structure_tutorial:house_one",
         "processors": "minecraft:empty",
         "projection": "rigid",
