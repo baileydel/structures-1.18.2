@@ -1,28 +1,20 @@
 package com.delke.custom_villages.network;
 
-import com.delke.custom_villages.VillageStructureStartWrapper;
-import com.delke.custom_villages.mixin.StructureStartAccessor;
+import com.delke.custom_villages.structures.StructureHandler;
 import com.delke.custom_villages.structures.pieces.BuildablePiece;
+import com.delke.custom_villages.structures.villagestructure.VillageStructureInstance;
+import com.delke.custom_villages.structures.pieces.placing.BuildablePiecePlacement;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.level.ChunkPos;
-import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.chunk.ChunkAccess;
-import net.minecraft.world.level.levelgen.LegacyRandomSource;
-import net.minecraft.world.level.levelgen.WorldgenRandom;
-import net.minecraft.world.level.levelgen.feature.StructureFeature;
 import net.minecraft.world.level.levelgen.feature.configurations.JigsawConfiguration;
 import net.minecraft.world.level.levelgen.structure.StructurePiece;
-import net.minecraft.world.level.levelgen.structure.StructureStart;
-import net.minecraft.world.level.levelgen.structure.pieces.PiecesContainer;
-import net.minecraft.world.level.levelgen.structure.pools.StructurePoolElement;
-import net.minecraft.world.level.levelgen.structure.pools.StructureTemplatePool;
-import net.minecraft.world.level.levelgen.structure.templatesystem.StructureManager;
+import net.minecraft.world.level.levelgen.structure.pieces.PieceGeneratorSupplier;
 import net.minecraftforge.network.NetworkEvent;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Supplier;
 
 /**
@@ -31,10 +23,8 @@ import java.util.function.Supplier;
  * @project structures-1.18.2
  */
 public class AddPieceStructurePacket {
-
-
     public AddPieceStructurePacket() {
-        System.out.println("Client - Trying to send ForcePacket");
+        System.out.println("[Client] - Adding Piece");
     }
 
     public AddPieceStructurePacket(FriendlyByteBuf buf) {}
@@ -47,57 +37,31 @@ public class AddPieceStructurePacket {
     //TODO Refactor this
     public static void handle(AddPieceStructurePacket msg, Supplier<NetworkEvent.Context> context) {
         NetworkEvent.Context ctx = context.get();
+
         ctx.enqueueWork(() -> {
             if (ctx.getSender() != null) {
-                List<StructureStart> starts = VillageStructureStartWrapper.startMap.get(ResetStructurePacket.STATIC_START);
+                VillageStructureInstance instance = StructureHandler.getInstance(new ChunkPos(0, 0));
+                ChunkPos pos = instance.getChunkPos();
 
-                if (starts != null) {
-                    for (StructureStart start : starts) {
-                        ChunkPos pos = start.getChunkPos();
-                        ChunkAccess chunk = ctx.getSender().level.getChunk(pos.x, pos.z);
+                PieceGeneratorSupplier.Context<?> s_context = instance.getContext();
 
-                        List<StructurePiece> newList = new ArrayList<>(start.getPieces());
+                System.out.println(s_context.config());
 
-                        if (newList.size() > 0) {
-                            newList.remove(newList.size() - 1);
-                        }
 
-                        print(newList);
+                ChunkAccess chunk = ctx.getSender().level.getChunk(pos.x, pos.z);
 
-                        ((StructureStartAccessor) (Object) start).setPieceContainer(new PiecesContainer(newList));
-                        chunk.setAllStarts(Map.of(start.getFeature(), start));
-                    }
-                }
+                List<BuildablePiece> t = BuildablePiecePlacement.getPieces(s_context, new BlockPos(8, 5, 8), false, true);
+
+                assert t != null;
+
+                List<StructurePiece> n = new ArrayList<>(t);
+
+                System.out.println(t);
+
+                instance.savePieces(chunk, n);
             }
         });
+
         ctx.setPacketHandled(true);
     }
-
-    private static void print(List<StructurePiece> pieces) {
-        for (StructurePiece piece : pieces) {
-            System.out.println(piece);
-        }
-    }
-
-    private BuildablePiece createPiece() {
-        if (ResetStructurePacket.STRUCTURE_FEATURE != null) {
-            WorldgenRandom worldgenrandom = new WorldgenRandom(new LegacyRandomSource(0L));
-
-            worldgenrandom.setLargeFeatureSeed(ResetStructurePacket.SEED, ResetStructurePacket.STATIC_START.x, ResetStructurePacket.STATIC_START.z);
-            JigsawConfiguration jigsawconfiguration = (JigsawConfiguration) ResetStructurePacket.STRUCTURE_FEATURE.config;
-
-            StructureManager structuremanager = ResetStructurePacket.STRUCTURE_MANAGER;
-
-            StructureFeature.bootstrap();
-            Rotation rotation = Rotation.getRandom(worldgenrandom);
-            StructureTemplatePool structuretemplatepool = jigsawconfiguration.startPool().value();
-            StructurePoolElement structurepoolelement = structuretemplatepool.getRandomTemplate(worldgenrandom);
-
-            BlockPos pos = new BlockPos(30, 173, 0);
-
-            return new BuildablePiece(structuremanager, structurepoolelement, pos, structurepoolelement.getGroundLevelDelta(), rotation, structurepoolelement.getBoundingBox(structuremanager, pos, rotation));
-        }
-        return null;
-    }
-
 }
