@@ -1,12 +1,13 @@
-package com.delke.custom_villages.structures;
+package com.delke.custom_villages.structures.villagestructure;
 
 import com.delke.custom_villages.structures.pieces.BuildablePiece;
-import com.delke.custom_villages.structures.pieces.BuildablePiecePlacement;
+import com.delke.custom_villages.structures.pieces.placing.BuildablePiecePlacement;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.levelgen.GenerationStep;
+import net.minecraft.world.level.levelgen.RandomSupport;
 import net.minecraft.world.level.levelgen.feature.StructureFeature;
 import net.minecraft.world.level.levelgen.feature.configurations.JigsawConfiguration;
 import net.minecraft.world.level.levelgen.structure.PostPlacementProcessor;
@@ -15,9 +16,11 @@ import net.minecraft.world.level.levelgen.structure.pieces.PieceGeneratorSupplie
 import net.minecraft.world.level.levelgen.structure.pools.StructureTemplatePool;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Optional;
+import java.util.*;
 
 public class VillageStructure extends StructureFeature<JigsawConfiguration> {
+    public static long SEED = RandomSupport.seedUniquifier();
+
     public static final Codec<JigsawConfiguration> CODEC = RecordCodecBuilder.create((codec) ->
         codec.group(
                 StructureTemplatePool.CODEC.fieldOf("start_pool").forGetter(JigsawConfiguration::startPool),
