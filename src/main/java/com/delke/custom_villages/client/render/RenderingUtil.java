@@ -19,11 +19,6 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.model.data.EmptyModelData;
 
-/**
- * @author Bailey Delker
- * @created 07/30/2023 - 12:18 PM
- * @project structures-1.18.2
- */
 @OnlyIn(Dist.CLIENT)
 public class RenderingUtil {
     public static void renderBoundingBox(PoseStack stack, BoundingBox box) {
@@ -53,7 +48,7 @@ public class RenderingUtil {
         RenderSystem.lineWidth(2.0F);
         bufferbuilder.begin(VertexFormat.Mode.DEBUG_LINE_STRIP, DefaultVertexFormat.POSITION_COLOR);
 
-        renderVerticalLine(minX, minY, maxY, minZ, 1.0F, 1.0F, 1.0F, 1.0F);
+        renderVerticalLine(minX, minY, maxY, minZ, 1.0F, 0.0F, 0.0F, 1.0F);
         renderVerticalLine(minX, minY, maxY, maxZ);
 
         renderVerticalLine(maxX, minY, maxY, maxZ, 0.0F, 1.0F, 0.0F, 1.0F);
@@ -80,7 +75,7 @@ public class RenderingUtil {
     }
 
     private static void renderVerticalLine(double x, double minH, double maxH, double z) {
-        renderVerticalLine(x, minH, maxH, z, 1.0F, 0.0F, 0.0F, 1.0F);
+        renderVerticalLine(x, minH, maxH, z, 1.0F, 1.0F, 1.0F, 1.0F);
     }
 
     private static void renderVerticalLine(double x, double minH, double maxH, double z, float r, float g, float b, float a) {
@@ -97,10 +92,10 @@ public class RenderingUtil {
         Tesselator tesselator = Tesselator.getInstance();
         BufferBuilder bufferbuilder = tesselator.getBuilder();
 
-        bufferbuilder.vertex(minX, h, minZ).color(1.0F, 0.0F, 0.0F, 0.0F).endVertex();
-        bufferbuilder.vertex(minX, h, minZ).color(1.0F, 0.0F, 0.0F, 0.5F).endVertex();
-        bufferbuilder.vertex(maxX, h, maxZ).color(1.0F, 0.0F, 0.0F, 0.5F).endVertex();
-        bufferbuilder.vertex(maxX, h, maxZ).color(1.0F, 0.0F, 0.0F, 0.0F).endVertex();
+        bufferbuilder.vertex(minX, h, minZ).color(1.0F, 1.0F, 1.0F, 0.0F).endVertex();
+        bufferbuilder.vertex(minX, h, minZ).color(1.0F, 1.0F, 1.0F, 0.5F).endVertex();
+        bufferbuilder.vertex(maxX, h, maxZ).color(1.0F, 1.0F, 1.0F, 0.5F).endVertex();
+        bufferbuilder.vertex(maxX, h, maxZ).color(1.0F, 1.0F, 1.0F, 0.0F).endVertex();
     }
 
     public static void renderBlock(PoseStack matrix, BlockPos pos, BlockState state) {
