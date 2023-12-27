@@ -1,18 +1,20 @@
 package com.delke.custom_villages.network;
 
-import com.delke.custom_villages.VillageStructureStartWrapper;
-import com.delke.custom_villages.mixin.StructureStartAccessor;
+import com.delke.custom_villages.structures.StructureHandler;
+import com.delke.custom_villages.structures.pieces.BuildablePiece;
+import com.delke.custom_villages.structures.pieces.placing.BuildablePiecePlacement;
+import com.delke.custom_villages.structures.villagestructure.VillageStructureInstance;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.chunk.ChunkAccess;
+import net.minecraft.world.level.levelgen.feature.configurations.JigsawConfiguration;
 import net.minecraft.world.level.levelgen.structure.StructurePiece;
-import net.minecraft.world.level.levelgen.structure.StructureStart;
-import net.minecraft.world.level.levelgen.structure.pieces.PiecesContainer;
+import net.minecraft.world.level.levelgen.structure.pieces.PieceGeneratorSupplier;
 import net.minecraftforge.network.NetworkEvent;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Supplier;
 
 /**
@@ -36,24 +38,24 @@ public class DeleteStructurePiecePacket {
         NetworkEvent.Context ctx = context.get();
         ctx.enqueueWork(() -> {
             if (ctx.getSender() != null) {
-                List<StructureStart> starts = VillageStructureStartWrapper.startMap.get(ResetStructurePacket.STATIC_START);
+                if (ctx.getSender() != null) {
+                    VillageStructureInstance instance = StructureHandler.getInstance(new ChunkPos(0, 0));
+                    ChunkPos pos = instance.getChunkPos();
 
-                if (starts != null) {
-                    for (StructureStart start : starts) {
-                        ChunkPos pos = start.getChunkPos();
-                        ChunkAccess chunk = ctx.getSender().level.getChunk(pos.x, pos.z);
+                    PieceGeneratorSupplier.Context<JigsawConfiguration> s_context = (PieceGeneratorSupplier.Context<JigsawConfiguration>) instance.getContext();
 
-                        List<StructurePiece> newList = new ArrayList<>(start.getPieces());
+                    ChunkAccess chunk = ctx.getSender().level.getChunk(pos.x, pos.z);
 
-                        if (newList.size() > 0) {
-                            newList.remove(newList.size() - 1);
-                        }
+                    BuildablePiecePlacement.placer.removePiece();
 
-                        print(newList);
+                    List<BuildablePiece> t = BuildablePiecePlacement.placer.getPieces();
 
-                        ((StructureStartAccessor) (Object) start).setPieceContainer(new PiecesContainer(newList));
-                        chunk.setAllStarts(Map.of(start.getFeature(), start));
-                    }
+                    List<StructurePiece> n = new ArrayList<>(t);
+
+                    System.out.println(t);
+
+                    instance.savePieces(chunk, n);
+
                 }
             }
         });
