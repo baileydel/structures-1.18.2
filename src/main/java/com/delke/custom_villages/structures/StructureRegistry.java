@@ -2,6 +2,7 @@ package com.delke.custom_villages.structures;
 
 import com.delke.custom_villages.Main;
 import com.delke.custom_villages.structures.pieces.BuildablePiece;
+import com.delke.custom_villages.structures.villagestructure.VillageStructure;
 import net.minecraft.core.Registry;
 import net.minecraft.world.level.levelgen.feature.StructureFeature;
 import net.minecraft.world.level.levelgen.feature.configurations.JigsawConfiguration;
