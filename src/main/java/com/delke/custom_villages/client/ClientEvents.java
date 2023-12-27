@@ -1,13 +1,14 @@
 package com.delke.custom_villages.client;
 
-import com.delke.custom_villages.VillageStructureStartWrapper;
 import com.delke.custom_villages.client.render.RenderBuildablePiece;
 import com.delke.custom_villages.network.AddPieceStructurePacket;
 import com.delke.custom_villages.network.DeleteStructurePiecePacket;
+import com.delke.custom_villages.network.GenerateStructurePacket;
 import com.delke.custom_villages.network.Network;
-import com.delke.custom_villages.network.ResetStructurePacket;
+import com.delke.custom_villages.structures.StructureHandler;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
+import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraftforge.api.distmarker.Dist;
@@ -19,7 +20,9 @@ import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * @author Bailey Delker
@@ -35,14 +38,15 @@ public class ClientEvents {
     @SubscribeEvent
     public void OnKey(InputEvent.KeyInputEvent event) {
         Minecraft mc = Minecraft.getInstance();
-        if (mc.player != null && mc.level != null) {
+
+        if (mc.screen == null && mc.player != null && mc.level != null) {
             switch (event.getKey()) {
                 case 61 ->  // + Generate Structure
                         sendPacket(new AddPieceStructurePacket());
-                case 82 -> // R Clear Blocks, and reset structure..
-                        sendPacket(new ResetStructurePacket());
-                case 45 -> // G Delete a Piece
+                case 45 -> // - Delete a Piece
                         sendPacket(new DeleteStructurePiecePacket());
+                case 82 -> // R Clear Blocks, and reset structure..
+                        sendPacket(new GenerateStructurePacket(0, 0));
             }
         }
     }
@@ -61,7 +65,7 @@ public class ClientEvents {
     private void clear() {
         System.out.println("Clearing Pieces & Structure Starts");
         pieces.clear();
-        VillageStructureStartWrapper.startMap.clear();
+        StructureHandler.INSTANCES.clear();
         sentPacket = false;
     }
 
@@ -75,16 +79,36 @@ public class ClientEvents {
          */
 
         Minecraft mc = Minecraft.getInstance();
+        Player player = mc.player;
 
-        if (mc.player != null) {
+        if (player != null) {
             if (tick <= 20) {
                 Font font = Minecraft.getInstance().font;
                 font.drawShadow(event.getMatrixStack(), tick + "", 50F, 50F, 23721831);
             }
 
-            for (RenderBuildablePiece piece : pieces) {
-                piece.renderGui(event.getMatrixStack());
+            // Prioritize rendering the closest piece the player is inside
+            Optional<RenderBuildablePiece> closestInsidePiece = pieces.stream()
+                    .filter(RenderBuildablePiece::isPlayerInside)
+                    .min(Comparator.comparingDouble(piece -> {
+                        BlockPos c = piece.getBox().getCenter();
+                        return player.distanceToSqr(c.getX(), c.getY(), c.getZ());
+                    }));
+
+            if (closestInsidePiece.isPresent()) {
+                closestInsidePiece.get().renderGui(event.getMatrixStack());
+                return; // Exit early if a piece was rendered inside
             }
+
+            // Fallback to rendering the closest piece the player is looking at
+            Optional<RenderBuildablePiece> closestLookingAtPiece = pieces.stream()
+                    .filter(RenderBuildablePiece::isLookingAtBox)
+                    .min(Comparator.comparingDouble(piece -> {
+                        BlockPos c = piece.getBox().getCenter();
+                        return player.distanceToSqr(c.getX(), c.getY(), c.getZ());
+                    }));
+
+            closestLookingAtPiece.ifPresent(piece -> piece.renderGui(event.getMatrixStack()));
         }
     }
 
