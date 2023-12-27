@@ -70,25 +70,26 @@ public class RenderBuildablePiece {
     public void renderGui(PoseStack stack) {
         Minecraft mc = Minecraft.getInstance();
         Player player = mc.player;
+        Font font = mc.font;
 
-        if (player != null && box.getCenter().closerThan(player.getOnPos(), mc.options.renderDistance * 16) && palette != null) {
-            Font font = mc.font;
+        if (player != null && this.palette != null) {
+            int y = mc.getWindow().getGuiScaledHeight() / 3;
+            for (Map.Entry<Block, List<StructureTemplate.StructureBlockInfo>> entry : palette.getCache().entrySet()) {
+                int size = entry.getValue().size() - placed.get(entry.getKey());
 
-            if (player.getBoundingBox().intersects(box.minX(), box.minY(), box.minZ(), box.maxX(), box.maxY(), box.maxZ()) || isLookingAtBox(player)) {
-                int y = mc.getWindow().getGuiScaledHeight() / 3;
+                int x = mc.getWindow().getGuiScaledWidth() - 30;
+                font.drawShadow(stack, size + "", x - 18, y + 3, 23721831);
 
-                for (Map.Entry<Block, List<StructureTemplate.StructureBlockInfo>> entry : palette.getCache().entrySet()) {
-                    int size = entry.getValue().size() - placed.get(entry.getKey());
+                RenderingUtil.renderCustomSlot(new ItemStack(entry.getKey().asItem()), x, y);
 
-                    int x = mc.getWindow().getGuiScaledWidth() - 30;
-                    font.drawShadow(stack, size + "", x - 18, y + 3, 23721831);
-
-                    RenderingUtil.renderCustomSlot(new ItemStack(entry.getKey().asItem()), x, y);
-
-                    y += 18;
-                }
+                y += 18;
             }
         }
+    }
+
+    public boolean isPlayerInside() {
+        Player player = Minecraft.getInstance().player;
+        return palette != null && player != null && player.getBoundingBox().intersects(box.minX(), box.minY(), box.minZ(), box.maxX(), box.maxY(), box.maxZ());
     }
 
     public void renderWorld(PoseStack stack) {
@@ -103,6 +104,8 @@ public class RenderBuildablePiece {
         }
     }
 
+
+    //TODO Remove this, it's only in rendering
     private void rotate() {
         assert palette != null;
 
@@ -167,57 +170,31 @@ public class RenderBuildablePiece {
         }
     }
 
-    private boolean isLookingAtBox(Player player) {
-        Vec3 vec3 = player.getViewVector(1.0F).normalize();
+    public boolean isLookingAtBox() {
+        Minecraft mc = Minecraft.getInstance();
+        Player player = mc.player;
+        assert player != null;
 
-        BoundingBox expanded = box.inflatedBy(3);
+// Get player's view vector and expanded box boundaries
+        Vec3 viewVector = player.getViewVector(1.0F).normalize();
+        BoundingBox expandedBox = box.inflatedBy(2);
 
-        // Points representing corners of the 3D box
-        Vec3 boxMin = new Vec3(expanded.minX(), expanded.minY(), expanded.minZ());
-        Vec3 boxMax = new Vec3(expanded.maxX(), expanded.maxY(), expanded.maxZ());
-        Vec3 playerPos = new Vec3(player.getX(), player.getEyeY(), player.getZ());
+// Define box corners directly from expanded box
+        Vec3 boxMin =  new Vec3(expandedBox.minX(), expandedBox.minY(), expandedBox.minZ());
+        Vec3 boxMax = new Vec3(expandedBox.maxX(), expandedBox.maxY(), expandedBox.maxZ());
+        Vec3 playerPos = player.position(); // Use position() for player's coordinates
 
-        for (int face = 0; face < 6; face++) {
-            Vec3 normal;
-            Vec3 pointOnFace;
-
-            switch (face) {
-                case 0: // +X face
-                    normal = new Vec3(1, 0, 0);
-                    pointOnFace = boxMax;
-                    break;
-                case 1: // -X face
-                    normal = new Vec3(-1, 0, 0);
-                    pointOnFace = boxMin;
-                    break;
-                case 2: // +Y face
-                    normal = new Vec3(0, 1, 0);
-                    pointOnFace = boxMax;
-                    break;
-                case 3: // -Y face
-                    normal = new Vec3(0, -1, 0);
-                    pointOnFace = boxMin;
-                    break;
-                case 4: // +Z face
-                    normal = new Vec3(0, 0, 1);
-                    pointOnFace = boxMax;
-                    break;
-                case 5: // -Z face
-                default:
-                    normal = new Vec3(0, 0, -1);
-                    pointOnFace = boxMin;
-                    break;
-            }
-
-            double t = (pointOnFace.subtract(playerPos)).dot(normal) / vec3.dot(normal);
+// Iterate through box faces efficiently
+        for (Vec3 normal : new Vec3[]{new Vec3(1, 0, 0), new Vec3(-1, 0, 0),
+                new Vec3(0, 1, 0), new Vec3(0, -1, 0),
+                new Vec3(0, 0, 1), new Vec3(0, 0, -1)}) {
+            Vec3 pointOnFace = normal.dot(boxMax) > 0 ? boxMax : boxMin; // Choose point based on normal
+            double t = (pointOnFace.subtract(playerPos)).dot(normal) / viewVector.dot(normal);
 
             if (t > 0) {
-                Vec3 scaledVec3 = new Vec3(vec3.x * t, vec3.y * t, vec3.z * t);
-                Vec3 intersection = playerPos.add(scaledVec3);
+                Vec3 intersection = playerPos.add(viewVector.scale(t)); // Combine scaling and adding
 
-                if (intersection.x >= boxMin.x && intersection.x <= boxMax.x &&
-                        intersection.y >= boxMin.y && intersection.y <= boxMax.y &&
-                        intersection.z >= boxMin.z && intersection.z <= boxMax.z) {
+                if (expandedBox.intersects(new BoundingBox(new BlockPos(intersection)))) { // Use contains() for concise intersection check
                     return true;
                 }
             }
