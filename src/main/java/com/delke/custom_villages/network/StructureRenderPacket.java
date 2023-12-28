@@ -25,13 +25,13 @@ import java.util.function.Supplier;
  * @created 06/20/2023 - 7:15 AM
  * @project structures-1.18.2
  */
-public class StructureDebugPacket {
+public class StructureRenderPacket {
     @Nullable
     private final CompoundTag tag;
     private final BoundingBox pieceBox;
     private final Rotation rotation;
 
-    public StructureDebugPacket(@Nullable CompoundTag tag, BoundingBox pieceBox, Rotation rotation) {
+    public StructureRenderPacket(@Nullable CompoundTag tag, BoundingBox pieceBox, Rotation rotation) {
         this.tag = tag;
         this.rotation = rotation;
         this.pieceBox = pieceBox;
@@ -41,7 +41,7 @@ public class StructureDebugPacket {
         }
     }
 
-    public StructureDebugPacket(FriendlyByteBuf buf) {
+    public StructureRenderPacket(FriendlyByteBuf buf) {
         tag = buf.readAnySizeNbt();
         rotation = getRotation();
         pieceBox = getBoundingBox(buf);
@@ -84,7 +84,7 @@ public class StructureDebugPacket {
     /*
         Only handle data on client (one way packet)
      */
-    public static void handle(StructureDebugPacket msg, Supplier<NetworkEvent.Context> ctx) {
+    public static void handle(StructureRenderPacket msg, Supplier<NetworkEvent.Context> ctx) {
         ctx.get().enqueueWork(() ->
                 DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
                     RenderBuildablePiece piece = new RenderBuildablePiece(msg.tag, msg.pieceBox, msg.rotation);
@@ -100,7 +100,7 @@ public class StructureDebugPacket {
     }
 
     public static void send(ServerPlayer player, StructureStart start) {
-        StructureDebugPacket packet = new StructureDebugPacket(null, start.getBoundingBox(), Rotation.NONE);
+        StructureRenderPacket packet = new StructureRenderPacket(null, start.getBoundingBox(), Rotation.NONE);
         Network.INSTANCE.sendTo(packet, player.connection.connection, NetworkDirection.PLAY_TO_CLIENT);
 
         List<StructurePiece> pieces = start.getPieces();
@@ -114,7 +114,7 @@ public class StructureDebugPacket {
 
             System.out.println("Server - Sending new Structure - " + piece.getRotation());
 
-            packet = new StructureDebugPacket(tag, piece.getBoundingBox(), piece.getRotation());
+            packet = new StructureRenderPacket(tag, piece.getBoundingBox(), piece.getRotation());
 
             Network.INSTANCE.sendTo(packet, player.connection.connection, NetworkDirection.PLAY_TO_CLIENT);
         }
