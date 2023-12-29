@@ -25,11 +25,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author Bailey Delker
- * @created 08/20/2023 - 1:55 PM
- * @project structures-1.18.2
- */
 @OnlyIn(Dist.CLIENT)
 public class RenderBuildablePiece {
     private final BoundingBox box;
@@ -38,6 +33,7 @@ public class RenderBuildablePiece {
     @Nullable
     private final ModPalette palette;
     private final Rotation rotation;
+    private final String name;
 
     /*
     For Gui Rendering.
@@ -52,18 +48,21 @@ public class RenderBuildablePiece {
     /*
     This is used to render relative to the world.
      */
-    private final HashSet<Pair<BlockPos, BlockState>> blocksToRender = new HashSet<>();
+    private HashSet<Pair<BlockPos, BlockState>> blocksToRender = new HashSet<>();
 
-    public RenderBuildablePiece(CompoundTag tag, BoundingBox box, Rotation rotation) {
+    public RenderBuildablePiece(String name, CompoundTag tag, BoundingBox box, Rotation rotation) {
         this.box = box;
         this.rotation = rotation;
+        this.name = name;
 
         if (tag != null) {
             this.palette = new ModPalette(tag);
             rotate();
+
+            this.blocksToRender = new HashSet<>(blocksToRender);
         }
         else {
-            this.palette = null;
+            palette = null;
         }
     }
 
@@ -74,22 +73,26 @@ public class RenderBuildablePiece {
 
         if (player != null && this.palette != null) {
             int y = mc.getWindow().getGuiScaledHeight() / 3;
+
             for (Map.Entry<Block, List<StructureTemplate.StructureBlockInfo>> entry : palette.getCache().entrySet()) {
-                int size = entry.getValue().size() - placed.get(entry.getKey());
+                Block block = entry.getKey();
+                int place = 0;
+
+                if (placed.get(block) != null) {
+                    place = placed.get(block);
+                }
+
+                int size = entry.getValue().size();
+                int amount = size - place;
 
                 int x = mc.getWindow().getGuiScaledWidth() - 30;
-                font.drawShadow(stack, size + "", x - 18, y + 3, 23721831);
+                font.drawShadow(stack, amount + "", x - 18, y + 3, 23721831);
 
-                RenderingUtil.renderCustomSlot(new ItemStack(entry.getKey().asItem()), x, y);
+                RenderingUtil.renderCustomSlot(new ItemStack(block.asItem()), x, y);
 
                 y += 18;
             }
         }
-    }
-
-    public boolean isPlayerInside() {
-        Player player = Minecraft.getInstance().player;
-        return palette != null && player != null && player.getBoundingBox().intersects(box.minX(), box.minY(), box.minZ(), box.maxX(), box.maxY(), box.maxZ());
     }
 
     public void renderWorld(PoseStack stack) {
@@ -104,31 +107,32 @@ public class RenderBuildablePiece {
         }
     }
 
-
-    //TODO Remove this, it's only in rendering
+    //TODO Move this to mod palette
     private void rotate() {
         assert palette != null;
+
+        BlockPos worldPos = new BlockPos(box.minX(), box.minY(), box.minZ());
+
+        System.out.println(name);
+        System.out.println(rotation);
 
         for (Map.Entry<Block, List<StructureTemplate.StructureBlockInfo>> entry : palette.getCache().entrySet()) {
             for (StructureTemplate.StructureBlockInfo info : entry.getValue()) {
                 BlockState state = info.state;
-                BlockPos minPos = new BlockPos(box.minX(), box.minY(), box.minZ());
                 BlockPos relativePos = info.pos;
 
                 relativePos = switch (rotation) {
-                    case COUNTERCLOCKWISE_90 ->
-                            new BlockPos(relativePos.getZ(), relativePos.getY(), relativePos.getX());
-                    case CLOCKWISE_180 ->
-                            new BlockPos(relativePos.getX(), relativePos.getY(), -relativePos.getZ() + box.getZSpan() - 1);
-                    case CLOCKWISE_90 ->
-                            new BlockPos(-relativePos.getZ() + box.getXSpan() - 1, relativePos.getY(), relativePos.getX());
+                    case CLOCKWISE_90 -> new BlockPos(-relativePos.getZ() + box.getXSpan() - 1 , relativePos.getY(), relativePos.getX());
+                    case COUNTERCLOCKWISE_90 -> new BlockPos(relativePos.getZ(), relativePos.getY(), -relativePos.getX() + box.getZSpan() - 1);
+
+                    case CLOCKWISE_180 -> new BlockPos(-relativePos.getX() + box.getXSpan() - 1, relativePos.getY(), -relativePos.getZ() + box.getZSpan() - 1);
                     default -> info.pos;
                 };
 
                 state = state.rotate(Minecraft.getInstance().level, relativePos, rotation);
 
                 // Translate to world position
-                BlockPos actualPos = minPos.offset(relativePos);
+                BlockPos actualPos = worldPos.offset(relativePos);
 
                 relativeToWorld.add(Pair.of(actualPos, state));
             }
@@ -141,50 +145,62 @@ public class RenderBuildablePiece {
 
         if (level != null && palette != null) {
             for (Pair<BlockPos, BlockState> pair : relativeToWorld) {
-                BlockState state = level.getBlockState(pair.getFirst());
+                BlockState worldBlock = level.getBlockState(pair.getFirst());
+                BlockState shouldBe = pair.getSecond();
 
-                boolean same = pair.getSecond().equals(state);
-                Block block = pair.getSecond().getBlock();
+                boolean same = shouldBe.equals(worldBlock);
 
                 if (same && blocksToRender.contains(pair)) {
-                    placed.compute(block, (b, i) -> {
-                        if (i != null) {
-                            return i + 1;
-                        }
-                        return 0;
-                    });
+                    int i;
+                    if (placed.get(shouldBe.getBlock()) == null)  {
+                        i = 0;
+                    }
+                    else {
+                        i = placed.get(shouldBe.getBlock());
+                    }
 
+                    placed.put(shouldBe.getBlock(), i + 1);
                     blocksToRender.remove(pair);
                 }
                 else if (!same && !blocksToRender.contains(pair)) {
+                    int i;
+
+                    if (placed.get(shouldBe.getBlock()) == null)  {
+                        i = 0;
+                    }
+                    else {
+                        i = placed.get(shouldBe.getBlock());
+                    }
+
                     blocksToRender.add(pair);
 
-                    placed.compute(block, (b, i) -> {
-                        if (i != null) {
-                            return i - 1;
-                        }
-                        return 0;
-                    });
+                    if (i > 0) {
+                        placed.put(shouldBe.getBlock(), i - 1);
+                    }
                 }
             }
         }
     }
 
     public boolean isLookingAtBox() {
+        if (palette == null) {
+            return false;
+        }
+
         Minecraft mc = Minecraft.getInstance();
         Player player = mc.player;
         assert player != null;
 
-// Get player's view vector and expanded box boundaries
+        // Get player's view vector and expanded box boundaries
         Vec3 viewVector = player.getViewVector(1.0F).normalize();
         BoundingBox expandedBox = box.inflatedBy(2);
 
-// Define box corners directly from expanded box
+        // Define box corners directly from expanded box
         Vec3 boxMin =  new Vec3(expandedBox.minX(), expandedBox.minY(), expandedBox.minZ());
         Vec3 boxMax = new Vec3(expandedBox.maxX(), expandedBox.maxY(), expandedBox.maxZ());
         Vec3 playerPos = player.position(); // Use position() for player's coordinates
 
-// Iterate through box faces efficiently
+        // Iterate through box faces efficiently
         for (Vec3 normal : new Vec3[]{new Vec3(1, 0, 0), new Vec3(-1, 0, 0),
                 new Vec3(0, 1, 0), new Vec3(0, -1, 0),
                 new Vec3(0, 0, 1), new Vec3(0, 0, -1)}) {
@@ -200,6 +216,11 @@ public class RenderBuildablePiece {
             }
         }
         return false;
+    }
+
+    public boolean isPlayerInside() {
+        Player player = Minecraft.getInstance().player;
+        return palette != null && player != null && player.getBoundingBox().intersects(box.minX(), box.minY(), box.minZ(), box.maxX(), box.maxY(), box.maxZ());
     }
 
     @Override
