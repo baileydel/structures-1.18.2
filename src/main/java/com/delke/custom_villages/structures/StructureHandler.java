@@ -1,6 +1,6 @@
 package com.delke.custom_villages.structures;
 
-import com.delke.custom_villages.network.StructureDebugPacket;
+import com.delke.custom_villages.network.StructureRenderPacket;
 import com.delke.custom_villages.structures.villagestructure.VillageStructure;
 import com.delke.custom_villages.structures.villagestructure.VillageStructureInstance;
 import com.google.common.collect.ImmutableList;
@@ -19,11 +19,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author Bailey Delker
- * @created 11/15/2023 - 3:35 PM
- * @project structures-1.18.2
- */
 public class StructureHandler {
     public static Map<ChunkPos, VillageStructureInstance> INSTANCES = new HashMap<>();
 
@@ -57,10 +52,8 @@ public class StructureHandler {
 
                         for (StructureStart start : s) {
                             if (start.getFeature().feature instanceof VillageStructure) {
-                                StructureDebugPacket.send(player, start);
-                                VillageStructureInstance instance = new VillageStructureInstance(start, access);
-                                instance.createContext(level, start);
-                                return instance;
+                                StructureRenderPacket.send(player, start);
+                                return new VillageStructureInstance(level, start, access);
                             }
                         }
                     }
