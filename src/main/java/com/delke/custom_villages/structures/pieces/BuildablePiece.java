@@ -44,6 +44,7 @@ public class BuildablePiece extends StructurePiece {
     private final List<JigsawJunction> junctions = Lists.newArrayList();
     private final StructureManager structureManager;
     private CompoundTag tag;
+    private final String name;
 
     public BuildablePiece(StructureManager structureManager, StructurePoolElement element, BlockPos pos, int groundLevelDelta, Rotation rotation, BoundingBox boundingBox) {
         super(StructureRegistry.VILLAGE_BUILDABLE_PIECE.get(), 0, boundingBox);
@@ -52,6 +53,7 @@ public class BuildablePiece extends StructurePiece {
         this.position = pos;
         this.groundLevelDelta = groundLevelDelta;
         this.rotation = rotation;
+        this.name = "";
     }
 
     public BuildablePiece(StructurePieceSerializationContext context, CompoundTag tag) {
@@ -66,6 +68,7 @@ public class BuildablePiece extends StructurePiece {
         ListTag listtag = tag.getList("junctions", 10);
         this.junctions.clear();
         listtag.forEach((p_204943_) -> this.junctions.add(JigsawJunction.deserialize(new Dynamic<>(dynamicops, p_204943_))));
+        this.name = "";
     }
 
     protected void addAdditionalSaveData(StructurePieceSerializationContext context, CompoundTag nbt) {
@@ -145,6 +148,10 @@ public class BuildablePiece extends StructurePiece {
             return tag;
         }
         return null;
+    }
+
+    public String getName() {
+        return getElement().toString().split("Left\\[")[1].split("]]")[0];
     }
 
     public String toString() {
