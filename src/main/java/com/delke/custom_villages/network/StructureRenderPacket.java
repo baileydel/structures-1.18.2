@@ -1,7 +1,7 @@
 package com.delke.custom_villages.network;
 
-import com.delke.custom_villages.client.render.RenderBuildablePiece;
 import com.delke.custom_villages.client.ClientEvents;
+import com.delke.custom_villages.client.render.RenderBuildablePiece;
 import com.delke.custom_villages.structures.pieces.BuildablePiece;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -30,11 +30,16 @@ public class StructureRenderPacket {
     private final CompoundTag tag;
     private final BoundingBox pieceBox;
     private final Rotation rotation;
+    private final String name;
 
-    public StructureRenderPacket(@Nullable CompoundTag tag, BoundingBox pieceBox, Rotation rotation) {
+    public StructureRenderPacket(String name, @Nullable CompoundTag tag, BoundingBox pieceBox, Rotation rotation) {
+        System.out.println("Server - Sending new Structure - " + rotation);
+
         this.tag = tag;
+        this.name = name;
         this.rotation = rotation;
         this.pieceBox = pieceBox;
+
 
         if (tag != null) {
             this.tag.putString("rotation", rotation.toString());
@@ -43,12 +48,14 @@ public class StructureRenderPacket {
 
     public StructureRenderPacket(FriendlyByteBuf buf) {
         tag = buf.readAnySizeNbt();
+        name = buf.readUtf();
         rotation = getRotation();
         pieceBox = getBoundingBox(buf);
     }
 
     public void write(FriendlyByteBuf buf) {
         buf.writeNbt(tag);
+        buf.writeUtf(name);
         writeBoundingBox(pieceBox, buf);
     }
 
@@ -87,12 +94,12 @@ public class StructureRenderPacket {
     public static void handle(StructureRenderPacket msg, Supplier<NetworkEvent.Context> ctx) {
         ctx.get().enqueueWork(() ->
                 DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
-                    RenderBuildablePiece piece = new RenderBuildablePiece(msg.tag, msg.pieceBox, msg.rotation);
+                    RenderBuildablePiece piece = new RenderBuildablePiece(msg.name, msg.tag, msg.pieceBox, msg.rotation);
 
                     //TODO Redo this
                     if (!ClientEvents.pieces.contains(piece)) {
                         ClientEvents.pieces.add(piece);
-                        System.out.println("Client - Adding new Box ");
+                        System.out.println("Client - \n");
                     }
                 })
         );
@@ -100,21 +107,21 @@ public class StructureRenderPacket {
     }
 
     public static void send(ServerPlayer player, StructureStart start) {
-        StructureRenderPacket packet = new StructureRenderPacket(null, start.getBoundingBox(), Rotation.NONE);
+        StructureRenderPacket packet = new StructureRenderPacket("village", null, start.getBoundingBox(), Rotation.NONE);
         Network.INSTANCE.sendTo(packet, player.connection.connection, NetworkDirection.PLAY_TO_CLIENT);
 
         List<StructurePiece> pieces = start.getPieces();
 
         for (StructurePiece piece : pieces) {
             CompoundTag tag = null;
+            String name = "";
 
             if (piece instanceof BuildablePiece buildablePiece) {
+                name = buildablePiece.getName();
                 tag = buildablePiece.getStructureData();
             }
 
-            System.out.println("Server - Sending new Structure - " + piece.getRotation());
-
-            packet = new StructureRenderPacket(tag, piece.getBoundingBox(), piece.getRotation());
+            packet = new StructureRenderPacket(name, tag, piece.getBoundingBox(), piece.getRotation());
 
             Network.INSTANCE.sendTo(packet, player.connection.connection, NetworkDirection.PLAY_TO_CLIENT);
         }
