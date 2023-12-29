@@ -21,7 +21,6 @@ apply plugin: 'net.minecraftforge.gradle'
 apply plugin: 'org.spongepowered.mixin'
 // Only edit below this line, the above code adds and enables the necessary things for Forge to be setup.
 
-
 version = "${mod_version}"
 group = 'com.delke.custom_villages' // https://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = 'structure_tutorial'
@@ -62,8 +61,9 @@ minecraft {
 }
 
 repositories {
-    // Repo for getting Blame from
-    maven { url "https://nexus.resourcefulbees.com/repository/telepathicgrunt/" }
+    flatDir {
+        dir '../build/libs'
+    }
 }
 
 dependencies {
@@ -76,7 +76,8 @@ dependencies {
 
     // I recommend having CommandStructures on in your development environment as it gives
     // commands for making debugging structures easier. It is super useful!
-    runtimeOnly fg.deobf("com.telepathicgrunt:CommandStructures:2.0.0+1.18.2")
+    // Examples using mod jars from ./libs
+    implementation fg.deobf("blank:guimod-${mc_version}:${1.0}")
 }
 
 mixin {
