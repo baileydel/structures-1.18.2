@@ -24,11 +24,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
-/**
- * @author Bailey Delker
- * @created 07/30/2023 - 12:16 PM
- * @project structures-1.18.2
- */
 @OnlyIn(Dist.CLIENT)
 public class ClientEvents {
     public static final List<RenderBuildablePiece> pieces = new ArrayList<>();
@@ -45,8 +40,9 @@ public class ClientEvents {
                         sendPacket(new AddPieceStructurePacket());
                 case 45 -> // - Delete a Piece
                         sendPacket(new DeleteStructurePiecePacket());
-                case 82 -> // R Clear Blocks, and reset structure..
-                        sendPacket(new GenerateStructurePacket(0, 0));
+                case 82 -> { // R Clear Blocks, and reset structure..
+                    sendPacket(new GenerateStructurePacket(0, 0));
+                }
             }
         }
     }
