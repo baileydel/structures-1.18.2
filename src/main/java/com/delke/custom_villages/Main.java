@@ -17,7 +17,7 @@ import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 
 @Mod(Main.MODID)
 public class Main {
-    public static final String MODID = "structure_tutorial";
+    public static final String MODID = "mod";
 
     public Main() {
         IEventBus bus = FMLJavaModLoadingContext.get().getModEventBus();
@@ -25,8 +25,7 @@ public class Main {
         bus.addListener(this::CommonSetup);
         bus.addListener(this::ClientSetup);
 
-        StructureRegistry.DEFERRED_REGISTRY_STRUCTURE.register(bus);
-        StructureRegistry.REGISTER.register(bus);
+        StructureRegistry.Register(bus);
 
         MinecraftForge.EVENT_BUS.register(this);
     }
@@ -45,7 +44,7 @@ public class Main {
     @SubscribeEvent
     public void WorldTick(TickEvent.WorldTickEvent event) {
         if (event.side.isServer()) {
-            ServerLevel level = (ServerLevel)event.world;
+            ServerLevel level = (ServerLevel) event.world;
             ServerPlayer player = level.getRandomPlayer();
 
             if (player == null) {
