@@ -3,17 +3,17 @@ loaderVersion="[38,)" #mandatory
 license="MIT License"
 
 [[mods]] #mandatory
-modId="structure_tutorial" #mandatory
+modId="mod" #mandatory
 version="${file.jarVersion}" #mandatory
 displayName="Structure Tutorial Mod" #mandatory
-credits="Special thanks to nhwhite3118 for helping out!"
-authors="TelepathicGrunt" #optional
+credits=""
+authors="" #optional
 description='''
-A short mod example on how to register structures and generate them in any biome using structure nbt files.
+
 '''
 
 # makes sure our mod does not be attempted to be ran on older version of Minecraft and explodes
-[[dependencies.structure_tutorial]]
+[[dependencies.mod]]
     modId="minecraft"
     mandatory=true
     versionRange="[1.18.2, 1.19)"

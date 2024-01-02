@@ -1,14 +1,14 @@
 {
     // The base structure class to use for the behavior of the structure. (Like extra terrain checks and such)
-  "type": "structure_tutorial:road",
+  "type": "mod:road",
 
   "config": {
       // the path to the template pool json file to use
-    "start_pool": "structure_tutorial:road_house/start_pool",
+    "start_pool": "mod:road/start_pool",
 
       // This is how many pieces away from the starting piece a piece of the structure can spawn
       // Think of it like the length of the branch of the structure
-    "size": 2
+    "size": 9
   },
 
     // The biome tag to use for what biomes that this structure can spawn in"

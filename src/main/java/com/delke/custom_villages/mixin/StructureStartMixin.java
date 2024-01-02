@@ -44,7 +44,7 @@ public abstract class StructureStartMixin {
 
             for (StructurePiece piece : pieceContainer.pieces()) {
                 if (piece instanceof BuildablePiece vbp) {
-                    if (vbp.getElement().toString().split("\\[")[2].replace("]]", "").equals("structure_tutorial:house_two")) {
+                    if (vbp.getElement().toString().split("\\[")[2].replace("]]", "").equals("mod:house_two")) {
                         break;
                     }
                 }
