@@ -77,8 +77,13 @@ dependencies {
     // I recommend having CommandStructures on in your development environment as it gives
     // commands for making debugging structures easier. It is super useful!
     // Examples using mod jars from ./libs
-    implementation fg.deobf("blank:guimod-${mc_version}:${1.0}")
-    implementation fg.deobf("blank:catalogue-1.6.2:1.18.2")
+    implementation fg.deobf("blank:gui_mod-1.18.2:1.0")
+    implementation fg.deobf("blank:catalogue-1.18.2:1.6.2")
+    implementation fg.deobf("blank:create-1.18.2:0.5.1")
+    implementation fg.deobf("blank:structure_gel-1.18.2:2.4.8")
+    implementation fg.deobf("blank:mouse_tweaks-1.18.2:21")
+
+
 }
 
 mixin {
