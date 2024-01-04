@@ -1,6 +1,6 @@
 package com.delke.custom_villages.structures;
 
-import com.delke.custom_villages.network.StructureRenderPacket;
+import com.delke.custom_villages.network.GetStructurePacket;
 import com.delke.custom_villages.structures.villagestructure.VillageStructure;
 import com.delke.custom_villages.structures.villagestructure.VillageStructureInstance;
 import com.google.common.collect.ImmutableList;
@@ -26,6 +26,10 @@ public class StructureHandler {
         return StructureHandler.INSTANCES.get(pos);
     }
 
+    //TODO In reality when we create a village structure we are going to save the structure pos in a file, rather than searching chunks
+    // this was only good for searching for random spawns
+    // we should really convert it the other way
+
     public static void sendUnloadedChunks(ServerLevel level, ServerPlayer player) {
         ChunkPos chunkPos = new ChunkPos(player.getOnPos());
 
@@ -41,7 +45,7 @@ public class StructureHandler {
             for (int z = Z_MIN; z < Z_MAX; z += 9) {
                 ChunkPos finalChunkPos = chunkPos;
 
-                StructureHandler.INSTANCES.computeIfAbsent(chunkPos, (list) -> {
+                if (!StructureHandler.INSTANCES.containsKey(chunkPos)) {
                     SectionPos sectionpos = SectionPos.of(finalChunkPos, 0);
                     ChunkAccess access = level.getChunk(sectionpos.x(), sectionpos.z(), ChunkStatus.STRUCTURE_REFERENCES);
 
@@ -52,14 +56,13 @@ public class StructureHandler {
 
                         for (StructureStart start : s) {
                             if (start.getFeature().feature instanceof VillageStructure) {
-                                StructureRenderPacket.send(player, start);
-                                return new VillageStructureInstance(level, start, access);
+                                GetStructurePacket.send(player, start);
+
+                                StructureHandler.INSTANCES.put(chunkPos, new VillageStructureInstance(level, start, access));
                             }
                         }
                     }
-                    return null;
-                });
-
+                }
                 chunkPos = new ChunkPos(new BlockPos(x, 0, z));
             }
         }
