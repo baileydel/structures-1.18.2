@@ -42,6 +42,7 @@ public class Placer {
    private final Random random;
    final Deque<BuildablePiecePlacement.PieceState> placing = Queues.newArrayDeque();
    private final List<String> t;
+   int y = 0;
 
    BuildablePiece origin;
 
@@ -61,7 +62,7 @@ public class Placer {
       List<String> c = new ArrayList<>();
 
       for (BuildablePiece piece : this.pieces) {
-         c.add(piece.getElement().toString().split("Left\\[")[1].split("]]")[0]);
+         c.add(piece.getName());
       }
 
       return c;
@@ -103,17 +104,12 @@ public class Placer {
             }
 
             for (Rotation rotation1 : Rotation.getShuffled(this.random)) {
-
                List<StructureTemplate.StructureBlockInfo> childBlocks = childElement.getShuffledJigsawBlocks(this.structureManager, BlockPos.ZERO, rotation1, this.random);
+
                for (StructureTemplate.StructureBlockInfo childBlock : childBlocks) {
                   String name = childBlock.nbt.getString("name");
 
-                  // Don't add if we already have that in our pieces...
-                  if (t.contains(name)) {
-                     continue;
-                  }
-
-                  if (JigsawBlock.canAttach(parentBlock, childBlock)) {
+                  if (JigsawBlock.canAttach(parentBlock, childBlock) && y < 10) {
                      BlockPos blockpos3 = childBlock.pos;
                      BlockPos blockpos4 = blockpos2.subtract(blockpos3);
                      BoundingBox boundingbox2 = childElement.getBoundingBox(this.structureManager, blockpos4, rotation1);
@@ -157,6 +153,7 @@ public class Placer {
 
                         t.add(name);
                         this.pieces.add(placing);
+                        y++;
 
                         AABB aabb = createAABB(placing.getBoundingBox(), 6);
                         //TODO LETS GO THIS PLACES ANOTHER CHILD
