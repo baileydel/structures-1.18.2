@@ -25,14 +25,14 @@ import java.util.function.Supplier;
  * @created 06/20/2023 - 7:15 AM
  * @project structures-1.18.2
  */
-public class StructureRenderPacket {
+public class GetStructurePacket {
     @Nullable
     private final CompoundTag tag;
     private final BoundingBox pieceBox;
     private final Rotation rotation;
     private final String name;
 
-    public StructureRenderPacket(String name, @Nullable CompoundTag tag, BoundingBox pieceBox, Rotation rotation) {
+    public GetStructurePacket(String name, @Nullable CompoundTag tag, BoundingBox pieceBox, Rotation rotation) {
         System.out.println("Server - Sending new Structure - " + rotation);
 
         this.tag = tag;
@@ -46,7 +46,7 @@ public class StructureRenderPacket {
         }
     }
 
-    public StructureRenderPacket(FriendlyByteBuf buf) {
+    public GetStructurePacket(FriendlyByteBuf buf) {
         tag = buf.readAnySizeNbt();
         name = buf.readUtf();
         rotation = getRotation();
@@ -91,12 +91,11 @@ public class StructureRenderPacket {
     /*
         Only handle data on client (one way packet)
      */
-    public static void handle(StructureRenderPacket msg, Supplier<NetworkEvent.Context> ctx) {
+    public static void handle(GetStructurePacket msg, Supplier<NetworkEvent.Context> ctx) {
         ctx.get().enqueueWork(() ->
                 DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
                     RenderBuildablePiece piece = new RenderBuildablePiece(msg.name, msg.tag, msg.pieceBox, msg.rotation);
 
-                    //TODO Redo this
                     if (!ClientEvents.pieces.contains(piece)) {
                         ClientEvents.pieces.add(piece);
                         System.out.println("Client - \n");
@@ -107,7 +106,7 @@ public class StructureRenderPacket {
     }
 
     public static void send(ServerPlayer player, StructureStart start) {
-        StructureRenderPacket packet = new StructureRenderPacket("village", null, start.getBoundingBox(), Rotation.NONE);
+        GetStructurePacket packet = new GetStructurePacket("village", null, start.getBoundingBox(), Rotation.NONE);
         Network.INSTANCE.sendTo(packet, player.connection.connection, NetworkDirection.PLAY_TO_CLIENT);
 
         List<StructurePiece> pieces = start.getPieces();
@@ -121,7 +120,7 @@ public class StructureRenderPacket {
                 tag = buildablePiece.getStructureData();
             }
 
-            packet = new StructureRenderPacket(name, tag, piece.getBoundingBox(), piece.getRotation());
+            packet = new GetStructurePacket(name, tag, piece.getBoundingBox(), piece.getRotation());
 
             Network.INSTANCE.sendTo(packet, player.connection.connection, NetworkDirection.PLAY_TO_CLIENT);
         }
