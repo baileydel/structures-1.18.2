@@ -2,7 +2,6 @@ package com.delke.custom_villages.structures.pieces.placing;
 
 import com.delke.custom_villages.structures.pieces.BuildablePiece;
 import com.google.common.collect.Queues;
-import com.mojang.logging.LogUtils;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Registry;
@@ -24,15 +23,16 @@ import net.minecraft.world.phys.shapes.BooleanOp;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.apache.commons.lang3.mutable.MutableObject;
-import org.slf4j.Logger;
 
 import java.util.*;
 
 import static com.delke.custom_villages.structures.pieces.placing.BuildablePiecePlacement.createAABB;
 
-public class Placer {
-   static final Logger LOGGER = LogUtils.getLogger();
+//TODO This is for jigsaw placements, or preset structures, We want to create a placer similar to this which still uses jigsaw blocks
+// but randomizes the distance between the 2 structures, which will basically only be used to separate buildings from roads
+// the placer will also create a path to each structure
 
+public class Placer {
    private final Registry<StructureTemplatePool> pools;
    private final int maxDepth;
    private final PieceFactory factory;
@@ -40,7 +40,7 @@ public class Placer {
    private final StructureManager structureManager;
    private final List<BuildablePiece> pieces;
    private final Random random;
-   final Deque<BuildablePiecePlacement.PieceState> placing = Queues.newArrayDeque();
+   final Deque<PieceState> placing = Queues.newArrayDeque();
    private final List<String> t;
    int y = 0;
 
