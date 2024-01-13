@@ -1,14 +1,18 @@
-package com.delke.custom_villages.client.render;
+package com.delke.custom_villages.client;
 
-import com.delke.custom_villages.client.ModPalette;
+import com.delke.custom_villages.client.render.RenderingUtil;
+import com.delke.custom_villages.structures.StructureHandler;
+import com.delke.custom_villages.structures.villagestructure.VillageStructureInstance;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.datafixers.util.Pair;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
+import net.minecraft.client.renderer.entity.ItemRenderer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Rotation;
@@ -26,7 +30,8 @@ import java.util.List;
 import java.util.Map;
 
 @OnlyIn(Dist.CLIENT)
-public class RenderBuildablePiece {
+public class ClientBuildablePiece {
+    public static ClientBuildablePiece CUR = null;
     private final BoundingBox box;
 
     //TODO Palette can never be empty, only line this for now because we have to send the structures overall bounding box
@@ -50,7 +55,7 @@ public class RenderBuildablePiece {
      */
     private HashSet<Pair<BlockPos, BlockState>> blocksToRender = new HashSet<>();
 
-    public RenderBuildablePiece(String name, CompoundTag tag, BoundingBox box, Rotation rotation) {
+    public ClientBuildablePiece(String name, CompoundTag tag, BoundingBox box, Rotation rotation) {
         this.box = box;
         this.rotation = rotation;
         this.name = name;
@@ -67,28 +72,28 @@ public class RenderBuildablePiece {
     }
 
     public void renderGui(PoseStack stack) {
+        CUR = this;
         Minecraft mc = Minecraft.getInstance();
         Player player = mc.player;
         Font font = mc.font;
 
+        int y = mc.getWindow().getGuiScaledHeight() / 3;
+        int x = mc.getWindow().getGuiScaledWidth() - 30;
+
         if (player != null && this.palette != null) {
-            int y = mc.getWindow().getGuiScaledHeight() / 3;
+            font.draw(stack, name, x - 18, y - 8, 23721831);
 
             for (Map.Entry<Block, List<StructureTemplate.StructureBlockInfo>> entry : palette.getCache().entrySet()) {
                 Block block = entry.getKey();
-                int place = 0;
-
-                if (placed.get(block) != null) {
-                    place = placed.get(block);
-                }
+                int place = placed.getOrDefault(block, 0);
 
                 int size = entry.getValue().size();
                 int amount = size - place;
 
-                int x = mc.getWindow().getGuiScaledWidth() - 30;
-                font.drawShadow(stack, amount + "", x - 18, y + 3, 23721831);
+                font.draw(stack, amount + "", x - 18, y + 8, 23721831);
 
-                RenderingUtil.renderCustomSlot(new ItemStack(block.asItem()), x, y);
+                ItemRenderer itemRenderer = mc.getItemRenderer();
+                itemRenderer.renderAndDecorateFakeItem(new ItemStack(block.asItem()), x, y);
 
                 y += 18;
             }
@@ -112,9 +117,6 @@ public class RenderBuildablePiece {
         assert palette != null;
 
         BlockPos worldPos = new BlockPos(box.minX(), box.minY(), box.minZ());
-
-        System.out.println(name);
-        System.out.println(rotation);
 
         for (Map.Entry<Block, List<StructureTemplate.StructureBlockInfo>> entry : palette.getCache().entrySet()) {
             for (StructureTemplate.StructureBlockInfo info : entry.getValue()) {
@@ -223,9 +225,13 @@ public class RenderBuildablePiece {
         return palette != null && player != null && player.getBoundingBox().intersects(box.minX(), box.minY(), box.minZ(), box.maxX(), box.maxY(), box.maxZ());
     }
 
+    public String getName() {
+        return name;
+    }
+
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof RenderBuildablePiece piece) {
+        if (obj instanceof ClientBuildablePiece piece) {
             return box.equals(piece.box);
         }
         return false;
@@ -233,5 +239,25 @@ public class RenderBuildablePiece {
 
     public BoundingBox getBox() {
         return this.box;
+    }
+
+
+    public void move(BlockPos pos) {
+        int x = box.getCenter().getX();
+        int z = box.getCenter().getZ();
+
+        int offsetX = pos.getX() - x;
+        int offsetZ = pos.getZ() - z;
+
+        VillageStructureInstance instance = StructureHandler.INSTANCES.get(new ChunkPos(0, 0));
+
+        if (instance != null) {
+            instance.movePiece("structuremod:tent_hunter", offsetX, 0, offsetZ);
+
+            ClientEvents.pieces.clear();
+            rotate();
+        }
+
+
     }
 }
