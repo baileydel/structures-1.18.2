@@ -105,6 +105,11 @@ public class BuildablePiece extends StructurePiece {
         this.position = this.position.offset(x, y, z);
     }
 
+    public void move(int x, int z) {
+        this.boundingBox = this.boundingBox.moved(x, 0, z);
+        this.position = new BlockPos(boundingBox.maxX(), boundingBox.minY(), boundingBox.minZ());
+    }
+
     public @NotNull Rotation getRotation() {
         return this.rotation;
     }
