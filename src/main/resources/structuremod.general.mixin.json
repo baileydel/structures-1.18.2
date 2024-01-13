@@ -9,6 +9,6 @@
   "injectors": {
     "defaultRequire": 1
   },
-  "refmap": "villagers.general.mixin-refmap.json",
+  "refmap": "structures.general.mixin-refmap.json",
   "minVersion": "0.8"
 }
