@@ -1,6 +1,5 @@
 package com.delke.custom_villages.client;
 
-import com.delke.custom_villages.client.render.RenderBuildablePiece;
 import com.delke.custom_villages.network.AddPieceStructurePacket;
 import com.delke.custom_villages.network.DeleteStructurePiecePacket;
 import com.delke.custom_villages.network.GenerateStructurePacket;
@@ -26,7 +25,8 @@ import java.util.Optional;
 
 @OnlyIn(Dist.CLIENT)
 public class ClientEvents {
-    public static final List<RenderBuildablePiece> pieces = new ArrayList<>();
+    public static final List<ClientBuildablePiece> pieces = new ArrayList<>();
+
     private int tick = 21;
     private boolean sentPacket = false;
 
@@ -40,9 +40,8 @@ public class ClientEvents {
                         sendPacket(new AddPieceStructurePacket());
                 case 45 -> // - Delete a Piece
                         sendPacket(new DeleteStructurePiecePacket());
-                case 82 -> { // R Clear Blocks, and reset structure..
-                    sendPacket(new GenerateStructurePacket(0, 0));
-                }
+                case 82 -> // R Clear Blocks, and reset structure..
+                        sendPacket(new GenerateStructurePacket(0, 0));
             }
         }
     }
@@ -67,44 +66,39 @@ public class ClientEvents {
 
     @SubscribeEvent
     public void RenderGui(RenderGameOverlayEvent event) {
-        /*
-            STOP-SHIP
-            Do Block check
-                if block state is wrong on structure make it yellow
-                if structure contains incorrect block make it red
-         */
+        if (event.getType() == RenderGameOverlayEvent.ElementType.LAYER) {
+            Minecraft mc = Minecraft.getInstance();
+            Player player = mc.player;
 
-        Minecraft mc = Minecraft.getInstance();
-        Player player = mc.player;
+            if (player != null) {
+                if (tick <= 20) {
+                    Font font = mc.font;
+                    font.drawShadow(event.getMatrixStack(), tick + "", 50F, 50F, 23721831);
+                }
 
-        if (player != null) {
-            if (tick <= 20) {
-                Font font = Minecraft.getInstance().font;
-                font.drawShadow(event.getMatrixStack(), tick + "", 50F, 50F, 23721831);
+                // Prioritize rendering the closest piece the player is inside
+                Optional<ClientBuildablePiece> closestInsidePiece = pieces.stream()
+                        .filter(ClientBuildablePiece::isPlayerInside)
+                        .min(Comparator.comparingDouble(piece -> {
+                            BlockPos c = piece.getBox().getCenter();
+                            return player.distanceToSqr(c.getX(), c.getY(), c.getZ());
+                        }));
+
+                if (closestInsidePiece.isPresent()) {
+                    closestInsidePiece.get().renderGui(event.getMatrixStack());
+                    return; // Exit early if a piece was rendered inside
+                }
+
+                // Fallback to rendering the closest piece the player is looking at
+                Optional<ClientBuildablePiece> closestLookingAtPiece = pieces.stream()
+                        .filter(ClientBuildablePiece::isLookingAtBox)
+                        .min(Comparator.comparingDouble(piece -> {
+                            BlockPos c = piece.getBox().getCenter();
+                            return player.distanceToSqr(c.getX(), c.getY(), c.getZ());
+                        }));
+
+                closestLookingAtPiece.ifPresent(piece -> piece.renderGui(event.getMatrixStack()));
             }
-
-            // Prioritize rendering the closest piece the player is inside
-            Optional<RenderBuildablePiece> closestInsidePiece = pieces.stream()
-                    .filter(RenderBuildablePiece::isPlayerInside)
-                    .min(Comparator.comparingDouble(piece -> {
-                        BlockPos c = piece.getBox().getCenter();
-                        return player.distanceToSqr(c.getX(), c.getY(), c.getZ());
-                    }));
-
-            if (closestInsidePiece.isPresent()) {
-                closestInsidePiece.get().renderGui(event.getMatrixStack());
-                return; // Exit early if a piece was rendered inside
-            }
-
-            // Fallback to rendering the closest piece the player is looking at
-            Optional<RenderBuildablePiece> closestLookingAtPiece = pieces.stream()
-                    .filter(RenderBuildablePiece::isLookingAtBox)
-                    .min(Comparator.comparingDouble(piece -> {
-                        BlockPos c = piece.getBox().getCenter();
-                        return player.distanceToSqr(c.getX(), c.getY(), c.getZ());
-                    }));
-
-            closestLookingAtPiece.ifPresent(piece -> piece.renderGui(event.getMatrixStack()));
         }
     }
 
@@ -114,7 +108,7 @@ public class ClientEvents {
         Player player = mc.player;
 
         if (player != null && mc.level != null && event.getStage().equals(RenderLevelStageEvent.Stage.AFTER_CUTOUT_BLOCKS)) {
-            for (RenderBuildablePiece piece : pieces) {
+            for (ClientBuildablePiece piece : pieces) {
                 BoundingBox box = piece.getBox();
 
                 if (box.getCenter().closerThan(player.getOnPos(), mc.options.renderDistance * 16)) {
