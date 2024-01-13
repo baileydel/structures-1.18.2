@@ -8,22 +8,25 @@ buildscript {
         }
         mavenCentral()
     }
+
     dependencies {
         classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '5.1.+', changing: true
         classpath 'org.spongepowered:mixingradle:0.7-SNAPSHOT'
     }
 }
 
-
 apply plugin: 'eclipse'
 apply plugin: 'maven-publish'
 apply plugin: 'net.minecraftforge.gradle'
 apply plugin: 'org.spongepowered.mixin'
-// Only edit below this line, the above code adds and enables the necessary things for Forge to be setup.
 
-version = "${mod_version}"
-group = 'com.delke.custom_villages' // https://maven.apache.org/guides/mini/guide-naming-conventions.html
-archivesBaseName = 'structure_tutorial'
+project.buildDir = '../build'
+
+version = "1.18.2-1.0"
+
+group = 'com.delke.custom_villages'
+
+archivesBaseName = 'structuremod'
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 
@@ -40,7 +43,7 @@ minecraft {
             // Needed to make other mods with mixins be able to run in you development environment
             property 'mixin.env.remapRefMap', 'true'
             property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
-            arg "-mixin.config=villagers.general.mixin.json"
+            arg "-mixin.config=structuremod.general.mixin.json"
 
             mods { examplemod { source sourceSets.main } }
         }
@@ -53,7 +56,7 @@ minecraft {
             // Needed to make other mods with mixins be able to run in you development environment
             property 'mixin.env.remapRefMap', 'true'
             property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
-            arg "-mixin.config=villagers.general.mixin.json"
+            arg "-mixin.config=structuremod.general.mixin.json"
 
             mods { examplemod {  source sourceSets.main } }
         }
@@ -61,33 +64,16 @@ minecraft {
 }
 
 repositories {
-    flatDir {
-        dir '../build/libs'
-    }
 }
 
 dependencies {
-    // Specify the version of Minecraft to use, If this is any group other then 'net.minecraft' it is assumed
-    // that the dep is a ForgeGradle 'patcher' dependency. And it's patches will be applied.
-    // The userdev artifact is a special name and will get all sorts of transformations applied to it.
     minecraft 'net.minecraftforge:forge:1.18.2-40.2.4'
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
     testAnnotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
-
-    // I recommend having CommandStructures on in your development environment as it gives
-    // commands for making debugging structures easier. It is super useful!
-    // Examples using mod jars from ./libs
-    implementation fg.deobf("blank:gui_mod-1.18.2:1.0")
-    implementation fg.deobf("blank:catalogue-1.18.2:1.6.2")
-    implementation fg.deobf("blank:create-1.18.2:0.5.1")
-    implementation fg.deobf("blank:structure_gel-1.18.2:2.4.8")
-    implementation fg.deobf("blank:mouse_tweaks-1.18.2:21")
-
-
 }
 
 mixin {
-    add sourceSets.main, "villagers.general.mixin-refmap.json"
+    add sourceSets.main, "structuremod.general.mixin-refmap.json"
 }
 
 // Example for how to get properties into the manifest for reading by the runtime..
@@ -98,15 +84,15 @@ jar {
 
     manifest {
         attributes([
-            "Specification-Title": "structure_tutorial",
-            "Specification-Vendor": "telepathicgrunt",
+            "Specification-Title": "structuremod",
+            "Specification-Vendor": "",
             "Specification-Version": "1",
             "Implementation-Title": project.name,
             "Implementation-Version": project.version,
-            "Implementation-Vendor" :"telepathicgrunt",
+            "Implementation-Vendor" :"",
             "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
             "TweakOrder": 0,
-            "MixinConfigs" : "villagers.general.mixin.json"
+            "MixinConfigs" : "structuremod.general.mixin.json"
         ])
     }
 }
