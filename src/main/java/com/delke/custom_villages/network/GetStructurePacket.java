@@ -1,7 +1,7 @@
 package com.delke.custom_villages.network;
 
+import com.delke.custom_villages.client.ClientBuildablePiece;
 import com.delke.custom_villages.client.ClientEvents;
-import com.delke.custom_villages.client.render.RenderBuildablePiece;
 import com.delke.custom_villages.structures.pieces.BuildablePiece;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -20,11 +20,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.function.Supplier;
 
-/**
- * @author Bailey Delker
- * @created 06/20/2023 - 7:15 AM
- * @project structures-1.18.2
- */
+
 public class GetStructurePacket {
     @Nullable
     private final CompoundTag tag;
@@ -94,7 +90,7 @@ public class GetStructurePacket {
     public static void handle(GetStructurePacket msg, Supplier<NetworkEvent.Context> ctx) {
         ctx.get().enqueueWork(() ->
                 DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
-                    RenderBuildablePiece piece = new RenderBuildablePiece(msg.name, msg.tag, msg.pieceBox, msg.rotation);
+                    ClientBuildablePiece piece = new ClientBuildablePiece(msg.name, msg.tag, msg.pieceBox, msg.rotation);
 
                     if (!ClientEvents.pieces.contains(piece)) {
                         ClientEvents.pieces.add(piece);

@@ -7,7 +7,6 @@ import com.delke.custom_villages.structures.villagestructure.VillageStructureIns
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.level.ChunkPos;
-import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.levelgen.structure.StructurePiece;
 import net.minecraft.world.level.levelgen.structure.pieces.PieceGeneratorSupplier;
 import net.minecraftforge.network.NetworkEvent;
@@ -41,8 +40,6 @@ public class AddPieceStructurePacket {
                 PieceGeneratorSupplier.Context<?> s_context = instance.getContext();
 
                 System.out.println(s_context.config());
-
-                ChunkAccess chunk = ctx.getSender().level.getChunk(pos.x, pos.z);
 
                 List<BuildablePiece> t = BuildablePiecePlacement.getPieces(s_context, new BlockPos(8, 5, 8), false, true);
 

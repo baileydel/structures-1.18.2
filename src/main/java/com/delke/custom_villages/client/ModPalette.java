@@ -18,13 +18,7 @@ import javax.annotation.Nullable;
 import java.util.*;
 import java.util.stream.Collectors;
 
-/**
- * @author Bailey Delker
- * @created 08/22/2023 - 11:56 AM
- * @project structures-1.18.2
- */
-
-//TODO This should really only be a pallete for the structure
+//TODO This should really only be a palette for the structure
     // the buildable piece should contain all of the placement info
 public class ModPalette {
     private List<StructureTemplate.StructureBlockInfo> blocks;
@@ -84,9 +78,9 @@ public class ModPalette {
         return this.blocks;
     }
 
+    //TODO Process the jigsaw blocks
     public Map<Block, List<StructureTemplate.StructureBlockInfo>> getCache() {
         this.cache.remove(Blocks.AIR);
-        this.cache.remove(Blocks.JIGSAW);
         return this.cache;
     }
 
@@ -115,6 +109,7 @@ public class ModPalette {
             p_74577_.add(p_74574_);
         }
     }
+
 
     static class SimplePalette implements Iterable<BlockState> {
         public static final BlockState DEFAULT_BLOCK_STATE = Blocks.AIR.defaultBlockState();

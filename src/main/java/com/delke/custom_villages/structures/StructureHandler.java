@@ -57,7 +57,6 @@ public class StructureHandler {
                         for (StructureStart start : s) {
                             if (start.getFeature().feature instanceof VillageStructure) {
                                 GetStructurePacket.send(player, start);
-
                                 StructureHandler.INSTANCES.put(chunkPos, new VillageStructureInstance(level, start, access));
                             }
                         }

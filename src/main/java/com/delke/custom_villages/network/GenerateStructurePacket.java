@@ -28,12 +28,6 @@ import java.util.Map;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-/**
- * @author Bailey Delker
- * @created 09/01/2023 - 2:20 PM
- * @project structures-1.18.2
- */
-
 public class GenerateStructurePacket {
     public int x;
     public int z;
@@ -56,7 +50,7 @@ public class GenerateStructurePacket {
     /*
         Only handle on server
      */
-    //TODO Refactor this
+    //TODO Check if the structure is then clear it
     public static void handle(GenerateStructurePacket msg, Supplier<NetworkEvent.Context> context) {
         NetworkEvent.Context ctx = context.get();
         ctx.enqueueWork(() -> {
@@ -78,7 +72,7 @@ public class GenerateStructurePacket {
 
                     SectionPos sectionPos = SectionPos.of(pos, 0);
                     ChunkGenerator generator = level.getChunkSource().getGenerator();
-                    StructureStart start = tryGenerateStructure(feature, generator, featureManager, REGISTRY_ACCESS, STRUCTURE_MANAGER, VillageStructure.SEED, chunk, pos, sectionPos);
+                    StructureStart start = getStart(feature, generator, featureManager, REGISTRY_ACCESS, STRUCTURE_MANAGER, VillageStructure.SEED, chunk, pos, sectionPos);
 
                     chunk.setStartForFeature(feature, start);
                     chunk.addReferenceForFeature(feature, ChunkPos.asLong(0, 0));
@@ -119,7 +113,6 @@ public class GenerateStructurePacket {
         ctx.setPacketHandled(true);
     }
 
-
     private static BoundingBox getWritableArea(ChunkAccess chunkAccess) {
         ChunkPos chunkpos = chunkAccess.getPos();
         int i = chunkpos.getMinBlockX();
@@ -130,14 +123,13 @@ public class GenerateStructurePacket {
         return new BoundingBox(i, k, j, i + 15, l, j + 15);
     }
 
-
-    private static StructureStart tryGenerateStructure(ConfiguredStructureFeature<?, ?> configuredstructurefeature, ChunkGenerator generator, StructureFeatureManager featureManager, RegistryAccess access, StructureManager p_208020_, long p_208021_, ChunkAccess chunkAccess, ChunkPos chunkPos, SectionPos sectionPos) {
+    private static StructureStart getStart(ConfiguredStructureFeature<?, ?> configuredstructurefeature, ChunkGenerator generator, StructureFeatureManager featureManager, RegistryAccess access, StructureManager structureManager, long seed, ChunkAccess chunkAccess, ChunkPos chunkPos, SectionPos sectionPos) {
         try {
             int i = fetchReferences(featureManager, chunkAccess, sectionPos, configuredstructurefeature);
 
             Predicate<Holder<Biome>> predicate = (w) -> true;
 
-            StructureStart structurestart = configuredstructurefeature.generate(access, generator, generator.getBiomeSource(), p_208020_, p_208021_, chunkPos, i, chunkAccess, predicate);
+            StructureStart structurestart = configuredstructurefeature.generate(access, generator, generator.getBiomeSource(), structureManager, seed, chunkPos, i, chunkAccess, predicate);
 
             if (structurestart.isValid()) {
                 featureManager.setStartForFeature(sectionPos, configuredstructurefeature, structurestart, chunkAccess);
@@ -150,8 +142,8 @@ public class GenerateStructurePacket {
         return StructureStart.INVALID_START;
     }
 
-    private static int fetchReferences(StructureFeatureManager p_207977_, ChunkAccess p_207978_, SectionPos p_207979_, ConfiguredStructureFeature<?, ?> p_207980_) {
-        StructureStart structurestart = p_207977_.getStartForFeature(p_207979_, p_207980_, p_207978_);
+    private static int fetchReferences(StructureFeatureManager structureFeatureManager, ChunkAccess p_207978_, SectionPos sectionPos, ConfiguredStructureFeature<?, ?> p_207980_) {
+        StructureStart structurestart = structureFeatureManager.getStartForFeature(sectionPos, p_207980_, p_207978_);
         return structurestart != null ? structurestart.getReferences() : 0;
     }
 }
