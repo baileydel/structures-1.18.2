@@ -22,7 +22,6 @@ import net.minecraft.world.level.levelgen.structure.pieces.PieceGeneratorSupplie
 import net.minecraft.world.level.levelgen.structure.pieces.PiecesContainer;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureManager;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -42,8 +41,6 @@ public class VillageStructureInstance {
     }
 
     public void movePiece(String name, int x, int y, int z) {
-        List<StructurePiece> pieces1 = new ArrayList<>();
-
         for (StructurePiece piece : this.pieces) {
             if (piece instanceof BuildablePiece buildablePiece) {
                 if (buildablePiece.getName().equals(name)) {
@@ -55,7 +52,6 @@ public class VillageStructureInstance {
                 }
             }
         }
-
     }
 
     public List<StructurePiece> getPieces() {
