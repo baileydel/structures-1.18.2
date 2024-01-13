@@ -6,9 +6,7 @@ import com.delke.custom_villages.structures.pieces.placing.BuildablePiecePlaceme
 import com.delke.custom_villages.structures.villagestructure.VillageStructureInstance;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.level.ChunkPos;
-import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.levelgen.structure.StructurePiece;
-import net.minecraft.world.level.levelgen.structure.pieces.PieceGeneratorSupplier;
 import net.minecraftforge.network.NetworkEvent;
 
 import java.util.ArrayList;
@@ -35,16 +33,17 @@ public class DeleteStructurePiecePacket {
                 ChunkPos pos = new ChunkPos(0, 0);
 
                 VillageStructureInstance instance = StructureHandler.getInstance(pos);
-                PieceGeneratorSupplier.Context<?> s_context = instance.getContext();
 
-                ChunkAccess chunk = ctx.getSender().level.getChunk(pos.x, pos.z);
+                List<BuildablePiece> t = new ArrayList<>();
 
-                BuildablePiecePlacement.placer.removePiece();
+                if (BuildablePiecePlacement.placer != null) {
+                    BuildablePiecePlacement.placer.removePiece();
+                    t = BuildablePiecePlacement.placer.getPieces();
+                }
 
-                List<BuildablePiece> t = BuildablePiecePlacement.placer.getPieces();
                 List<StructurePiece> n = new ArrayList<>(t);
 
-                instance.savePieces(chunk, n);
+                instance.savePieces(n);
             }
         });
         ctx.setPacketHandled(true);
