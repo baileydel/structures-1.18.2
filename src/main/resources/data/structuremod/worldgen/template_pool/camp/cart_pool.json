@@ -1,11 +1,11 @@
 {
-  "name": "structure_tutorial:road_house/room_pool",
+  "name": "structuremod:camp/cart_pool",
   "fallback": "minecraft:empty",
   "elements": [
     {
       "weight": 1,
       "element": {
-        "location": "structure_tutorial:house_two_room_one",
+        "location": "structuremod:wagon/transport_wood",
         "processors": "minecraft:empty",
         "projection": "rigid",
         "element_type": "minecraft:single_pool_element"
