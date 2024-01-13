@@ -25,7 +25,7 @@ public class Main {
         bus.addListener(this::CommonSetup);
         bus.addListener(this::ClientSetup);
 
-        ItemTeg.ITEMS.register(bus);
+        ItemRegistry.ITEMS.register(bus);
         StructureRegistry.Register(bus);
 
         MinecraftForge.EVENT_BUS.register(this);
