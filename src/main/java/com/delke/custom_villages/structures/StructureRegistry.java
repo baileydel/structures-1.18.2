@@ -15,7 +15,7 @@ import net.minecraftforge.registries.RegistryObject;
 public class StructureRegistry {
     public static final DeferredRegister<StructureFeature<?>> DEFERRED_REGISTRY_STRUCTURE = DeferredRegister.create(ForgeRegistries.STRUCTURE_FEATURES, Main.MODID);
 
-    public static final RegistryObject<StructureFeature<JigsawConfiguration>> SKY_STRUCTURES = DEFERRED_REGISTRY_STRUCTURE.register("road", VillageStructure::new);
+    public static final RegistryObject<StructureFeature<JigsawConfiguration>> NEW_VILLAGE = DEFERRED_REGISTRY_STRUCTURE.register("camp", VillageStructure::new);
 
     public static final DeferredRegister<StructurePieceType> REGISTER = DeferredRegister.create(Registry.STRUCTURE_PIECE_REGISTRY, Main.MODID);
 
